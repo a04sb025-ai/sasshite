@@ -59,9 +59,9 @@ CloudflareのGit連携を使う場合は、ビルドコマンドを `npm run bui
 
 - ワークフロー: `.github/workflows/generate-scene-art.yml`
 - プロンプト: `prompts/imagegen/`
-- 生成先: `src/assets/scenes/generated/`
+- 生成先: `public/scene-art/`
 
-生成はpushやデプロイでは自動実行されません。APIキーは画像生成時だけ使用し、Viteの環境変数や公開アプリには渡しません。
+画像生成用のワークフロー・プロンプト・CLIを変更したブランチでは一度だけ自動実行され、それ以外は手動実行です。APIキーは画像生成時だけ使用し、Viteの環境変数や公開アプリには渡しません。生成画像はActionsのartifactでも確認でき、成功時は実行したブランチへコミットされます。
 
 ## Ver.0.6の範囲
 
