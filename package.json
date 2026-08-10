@@ -1,0 +1,15 @@
+{
+  "name": "sasshite",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc -b --pretty false",
+    "test": "vitest run"
+  },
+  "dependencies": {"@vitejs/plugin-react":"latest","vite":"latest","typescript":"latest","react":"latest","react-dom":"latest"},
+  "devDependencies": {"@types/react":"latest","@types/react-dom":"latest","vitest":"latest","wrangler":"latest"}
+}
