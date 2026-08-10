@@ -25,7 +25,7 @@ export default function App() {
     if (index === scenes.length - 1) setScreen('result')
     else setIndex(current => current + 1)
   }
-  if (screen === 'title') return <main className="title-screen"><div><h1>察して。</h1><p>空気を読んでください。</p><button className="text-button" onClick={start}>はじめる</button></div><small>Ver. 0.2</small></main>
+  if (screen === 'title') return <main className="title-screen"><div><h1>察して。</h1><p>空気を読んでください。</p><button className="text-button" onClick={start}>はじめる</button></div><small>Ver. 0.3</small></main>
   if (screen === 'guide') return <main className="guide-screen"><div role="dialog" aria-labelledby="guide-title"><p id="guide-title">気になるものを<br />タップしてください。</p><p>何もしないのも答えです。</p><button className="text-button" onClick={closeGuide}>わかりました</button></div></main>
   if (screen === 'game') return <GameScene key={scenes[index].id} scene={scenes[index]} number={index + 1} total={scenes.length} onComplete={complete} />
   const result = diagnose(scores)
