@@ -1,19 +1,21 @@
 import { describe, expect, it } from 'vitest'
 import { scenes } from '../data/scenes'
-import { applyChoice, diagnose, initialScores } from './scoring'
+import { applyAction, diagnose, initialScores } from './scoring'
 
-describe('game scoring', () => {
-  it('provides five playable scenes with a wait outcome', () => {
+describe('Ver.0.6 game model', () => {
+  it('provides five direct-interaction scenes and a timeout action', () => {
     expect(scenes).toHaveLength(5)
-    expect(scenes.every(scene => scene.choices.some(choice => choice.id === 'wait') || scene.id === 'ending')).toBe(true)
+    expect(scenes.every(scene => scene.timeoutMs >= 10_000 && scene.actions.some(item => item.id === 'wait'))).toBe(true)
+    expect(scenes.flatMap(scene => scene.actions).every(item => item.history && item.reaction)).toBe(true)
   })
-  it('applies choices without exceeding the 0–100 range', () => {
-    let scores = initialScores
-    for (let pass = 0; pass < 10; pass++) for (const scene of scenes) scores = applyChoice(scores, scene.choices[0])
-    expect(Object.values(scores).every(value => value >= 0 && value <= 100)).toBe(true)
+  it('applies actions without mutating or exceeding the score range', () => {
+    const before = { ...initialScores }
+    const result = scenes.flatMap(scene => scene.actions).reduce(applyAction, initialScores)
+    expect(initialScores).toEqual(before)
+    expect(Object.values(result).every(value => value >= 0 && value <= 100)).toBe(true)
   })
-  it('changes the diagnosis based on the parameters', () => {
-    expect(diagnose({ awareness: 90, kindness: 90, assertiveness: 30, nerve: 30 }).title).toBe('空気読みの忍者')
-    expect(diagnose({ awareness: 20, kindness: 30, assertiveness: 80, nerve: 90 }).title).toBe('空気？ありました？')
+  it('describes different habits without a right-answer count', () => {
+    expect(diagnose({ awareness: 90, kindness: 90, assertiveness: 40, nerve: 40, hesitation: 0 }).title).toContain('疲れる')
+    expect(diagnose({ awareness: 40, kindness: 40, assertiveness: 40, nerve: 90, hesitation: 0 }).title).toBe('鋼のマイペース')
   })
 })
