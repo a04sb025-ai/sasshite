@@ -7,11 +7,11 @@ type Hotspot = {
 }
 
 const artByScene: Record<string, string> = {
-  train: '/scenes/train.jpg',
-  elevator: '/scenes/elevator.jpg',
-  karaage: '/scenes/karaage.jpg',
-  meeting: '/scenes/meeting.jpg',
-  ending: '/scenes/ending.jpg',
+  train: '/scenes/train.webp',
+  elevator: '/scenes/elevator.webp',
+  karaage: '/scenes/karaage.webp',
+  meeting: '/scenes/meeting.webp',
+  ending: '/scenes/ending.webp',
 }
 
 const sceneLabels: Record<string, string> = {
