@@ -1,0 +1,8 @@
+Use case: illustration-story
+Asset type: character reference for a Japanese mobile web game
+Primary request: Create a full-body character reference of one memorable young Japanese adult who represents the player. They wear a warm burnt-orange casual jacket over a cream shirt, dark navy trousers, and simple white sneakers. Their short dark-brown hair has one distinctive loose upward forelock. Show front, three-quarter, and side views with consistent face, hair, clothing, body proportions, and colors.
+Style/medium: polished hand-painted editorial illustration with believable anatomy, natural fabric folds, lightly textured gouache and colored-pencil edges; more realistic than a flat vector cartoon, but warm and approachable rather than photographic
+Composition/framing: clean character sheet, full body visible, generous separation between views
+Lighting/mood: soft natural daylight, gentle and observant
+Color palette: muted cream, charcoal, sage, warm burnt orange
+Constraints: Japanese adult; exactly the same character in every view; no labels; no logos; no watermark; no text; no chibi proportions; no glossy 3D rendering; no anime exaggeration
