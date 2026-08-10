@@ -26,10 +26,23 @@ npm run dev
 | --- | --- |
 | `npm run dev` | 開発サーバーを起動 |
 | `npm run build` | TypeScriptの検査後、配信用ファイルを生成 |
+| `npm run deploy` | `dist/` をCloudflare Workers Static Assetsへ公開 |
 | `npm run typecheck` | TypeScriptのみ検査 |
 | `npm test` | ゲーム進行と判定のテスト |
 
-生成される `dist/` は静的ファイルだけで、Cloudflare Pagesなどへそのまま公開できます。ビルドコマンドは `npm run build`、出力先は `dist` です。
+## 公開
+
+`npm run build` で生成される `dist/` を、Cloudflare Workers Static Assetsとして公開します。設定は `wrangler.jsonc` にあり、SPA用のフォールバックも有効にしています。Workerのサーバーサイドスクリプトは使用しません。
+
+ローカルから初回デプロイする場合は、Cloudflareへログインしてからビルド・デプロイします。
+
+```bash
+npx wrangler login
+npm run build
+npm run deploy
+```
+
+CloudflareのGit連携を使う場合は、ビルドコマンドを `npm run build`、デプロイコマンドを `npx wrangler deploy` に設定します。
 
 ## 構成
 
