@@ -1,9 +1,3 @@
-import trainArt from '../assets/scene-train.svg'
-import elevatorArt from '../assets/scene-elevator.svg'
-import karaageArt from '../assets/scene-karaage.svg'
-import meetingArt from '../assets/scene-meeting.svg'
-import endingArt from '../assets/scene-ending.svg'
-
 type Props = { sceneId: string; acted: string | null; onAction: (id: string) => void }
 
 type Hotspot = {
@@ -13,11 +7,11 @@ type Hotspot = {
 }
 
 const artByScene: Record<string, string> = {
-  train: trainArt,
-  elevator: elevatorArt,
-  karaage: karaageArt,
-  meeting: meetingArt,
-  ending: endingArt,
+  train: '/scenes/train.jpg',
+  elevator: '/scenes/elevator.jpg',
+  karaage: '/scenes/karaage.jpg',
+  meeting: '/scenes/meeting.jpg',
+  ending: '/scenes/ending.jpg',
 }
 
 const sceneLabels: Record<string, string> = {
@@ -49,7 +43,7 @@ const hotspotsByScene: Record<string, Hotspot[]> = {
 }
 
 export function SceneArtwork({ sceneId, acted, onAction }: Props) {
-  const src = artByScene[sceneId] ?? endingArt
+  const src = artByScene[sceneId] ?? artByScene.ending
   const hotspots = hotspotsByScene[sceneId] ?? hotspotsByScene.ending
 
   return <section
