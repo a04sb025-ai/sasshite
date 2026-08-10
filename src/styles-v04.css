@@ -98,6 +98,10 @@
   color: #b95f37;
   font-size: 18px;
 }
+.guide-screen .player-guide + p {
+  margin: 0 0 46px;
+  font-size: 17px;
+}
 
 @media (max-width: 350px) {
   .game-screen { padding-inline: 7px; }
