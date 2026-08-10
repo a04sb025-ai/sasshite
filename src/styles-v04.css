@@ -1,0 +1,110 @@
+/* Ver.0.4: ChatGPT-generated scene artwork with invisible interaction hotspots. */
+.image-scene {
+  position: relative;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border: 2px solid #81796c;
+  border-radius: 12px;
+  background: #efe5d0;
+  box-shadow: 0 7px 20px #4e463328;
+  isolation: isolate;
+}
+
+.scene-image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+.scene-hotspot {
+  position: absolute;
+  z-index: 10;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  background: transparent;
+  color: transparent;
+  box-shadow: none;
+  transition: transform .12s ease, background .12s ease;
+}
+.scene-hotspot:active:not(:disabled) {
+  transform: scale(.95);
+  background: #fff5;
+}
+.scene-hotspot:focus-visible {
+  outline: 3px solid #bd6b3e;
+  outline-offset: 2px;
+  background: #fff4;
+}
+.scene-hotspot:disabled { cursor: default; }
+
+.hotspot-train-bag { left: 31%; top: 55%; width: 34%; height: 24%; }
+.hotspot-elevator-open { left: 28%; top: 47%; width: 18%; height: 14%; }
+.hotspot-elevator-close { left: 28%; top: 58%; width: 18%; height: 13%; }
+.hotspot-karaage { left: 43%; top: 47%; width: 27%; height: 20%; }
+.hotspot-meeting-mic { left: 1%; top: 80%; width: 27%; height: 18%; }
+.hotspot-ending-finish { left: 34%; top: 34%; width: 34%; height: 14%; }
+.hotspot-ending-trash { left: 72%; top: 57%; width: 25%; height: 19%; }
+
+.scene-action-feedback {
+  position: absolute;
+  z-index: 12;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid #55724f;
+  border-radius: 50%;
+  background: #fffdf0e8;
+  color: #55724f;
+  font: 700 24px/1 sans-serif;
+  box-shadow: 0 3px 10px #3c382c24;
+  animation: scene-feedback-in .18s ease-out both;
+}
+@keyframes scene-feedback-in {
+  from { opacity: 0; transform: scale(.7) rotate(-8deg); }
+  to { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+.player-guide {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 20px;
+  padding: 8px 12px;
+  border: 1px solid #c8ad93;
+  border-radius: 999px;
+  background: #f7eadc;
+  color: #5f4334;
+  font-size: 15px;
+  font-weight: 600;
+}
+.player-guide::before {
+  content: "●";
+  color: #b95f37;
+  font-size: 18px;
+}
+
+@media (max-width: 350px) {
+  .game-screen { padding-inline: 7px; }
+  .scene-header { height: 62px; }
+  .scene-header p { font-size: 17px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-hotspot, .scene-action-feedback { transition: none; animation: none; }
+}
