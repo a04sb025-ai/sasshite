@@ -1,0 +1,56 @@
+name: Generate scene artwork
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/generate-scene-art.yml'
+      - 'prompts/imagegen/**'
+      - 'scripts/imagegen/image_gen.py'
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install image-generation dependencies
+        run: python -m pip install --disable-pip-version-check openai pillow
+      - name: Generate consistent character reference
+        run: |
+          mkdir -p output/imagegen public/scene-art
+          python scripts/imagegen/image_gen.py generate \
+            --prompt-file prompts/imagegen/character.txt \
+            --model gpt-image-2 --quality high --size 1024x1536 \
+            --out output/imagegen/character-reference.png
+      - name: Generate scenes from the character reference
+        run: |
+          for scene in train elevator karaage meeting ending; do
+            python scripts/imagegen/image_gen.py edit \
+              --image output/imagegen/character-reference.png \
+              --prompt-file "prompts/imagegen/${scene}.txt" \
+              --model gpt-image-2 --quality high \
+              --out "public/scene-art/${scene}.png"
+          done
+      - name: Upload artwork for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-scene-art
+          path: public/scene-art/*.png
+      - name: Commit generated assets to this branch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add public/scene-art
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Generate realistic scene artwork"
+          git push origin HEAD:${GITHUB_REF_NAME}

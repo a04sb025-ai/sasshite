@@ -1,4 +1,18 @@
-export type Trait = 'awareness' | 'kindness' | 'assertiveness' | 'nerve'
+export type Trait = 'awareness' | 'kindness' | 'assertiveness' | 'nerve' | 'hesitation'
 export type Scores = Record<Trait, number>
-export type Choice = { id: string; label: string; scores: Partial<Scores> }
-export type Scene = { id: string; eyebrow: string; timeoutMs: number; choices: Choice[] }
+
+export type Action = {
+  id: string
+  history: string
+  reaction: string
+  scores: Partial<Scores>
+}
+
+export type Scene = {
+  id: 'train' | 'elevator' | 'karaage' | 'meeting' | 'ending'
+  eyebrow: string
+  timeoutMs: number
+  actions: Action[]
+}
+
+export type GameRecord = { scene: string; action: string }
