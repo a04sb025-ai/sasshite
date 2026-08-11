@@ -6,6 +6,7 @@ import {
   type MouseEvent,
   type PointerEvent,
   type ReactNode,
+  type SyntheticEvent,
 } from 'react'
 import type { Scene } from '../types'
 import endingArtwork from '../assets/scenes/ending.svg'
@@ -17,36 +18,35 @@ import trainArtwork from '../assets/scenes/train.svg'
 type Props = { sceneId: Scene['id']; acted: string | null; onAction: (id: string) => void }
 type ArtSource = 'generated' | 'fallback'
 type HitBox = { left: number; top: number; width: number; height: number }
+type Point = { x: number; y: number }
+type SceneStyle = CSSProperties & { '--scene-aspect'?: string; '--scene-image'?: string }
 
 export const sceneHitAreas = {
   train: {
-    player: { left: 9, top: 49, width: 29, height: 34 },
-    bag: { left: 39, top: 57, width: 26, height: 19 },
-    lap: { left: 18, top: 63, width: 25, height: 18 },
-    floor: { left: 10, top: 81, width: 78, height: 16 },
+    player: { left: 5, top: 49, width: 25, height: 35 },
+    bag: { left: 29, top: 50, width: 42, height: 31 },
   },
   elevator: {
-    open: { left: 73, top: 48, width: 18, height: 10 },
-    close: { left: 73, top: 59, width: 18, height: 10 },
+    open: { left: 65, top: 42, width: 28, height: 17 },
+    close: { left: 65, top: 58, width: 28, height: 17 },
   },
   karaage: {
-    food: { left: 42, top: 43, width: 18, height: 16 },
-    leftPlate: { left: 13, top: 45, width: 22, height: 17 },
-    rightPlate: { left: 65, top: 45, width: 22, height: 17 },
-    ownPlate: { left: 39, top: 70, width: 23, height: 17 },
-    sharedPlate: { left: 34, top: 35, width: 32, height: 25 },
+    food: { left: 33, top: 34, width: 34, height: 31 },
   },
   meeting: {
-    mic: { left: 20, top: 81, width: 18, height: 12 },
-    hand: { left: 41, top: 81, width: 18, height: 12 },
-    chat: { left: 62, top: 81, width: 18, height: 12 },
+    mic: { left: 4, top: 76, width: 30, height: 19 },
+    hand: { left: 35, top: 76, width: 30, height: 19 },
+    chat: { left: 66, top: 76, width: 30, height: 19 },
   },
   ending: {
-    finish: { left: 35, top: 52, width: 30, height: 11 },
-    paper: { left: 78, top: 86, width: 14, height: 10 },
-    bin: { left: 7, top: 79, width: 20, height: 17 },
+    finish: { left: 30, top: 46, width: 40, height: 21 },
+    paper: { left: 68, top: 76, width: 29, height: 22 },
   },
 } satisfies Record<Scene['id'], Record<string, HitBox>>
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value))
+}
 
 function hitStyle(box: HitBox): CSSProperties {
   return {
@@ -55,6 +55,41 @@ function hitStyle(box: HitBox): CSSProperties {
     width: `${box.width}%`,
     height: `${box.height}%`,
   }
+}
+
+function pointInScene(element: HTMLElement, clientX: number, clientY: number) {
+  const art = element.closest<HTMLElement>('.art')
+  if (!art) return { point: { x: 50, y: 50 }, clientX, clientY, artRect: null }
+  const rect = art.getBoundingClientRect()
+  const x = clamp(clientX, rect.left, rect.right)
+  const y = clamp(clientY, rect.top, rect.bottom)
+  return {
+    point: {
+      x: ((x - rect.left) / rect.width) * 100,
+      y: ((y - rect.top) / rect.height) * 100,
+    },
+    clientX: x,
+    clientY: y,
+    artRect: rect,
+  }
+}
+
+export function classifyTrainDrop(point: Point) {
+  if (point.y >= 70) return 'bag-floor'
+  if (point.x <= 48 && point.y >= 42) return 'bag-lap'
+  return 'bag-other'
+}
+
+export function classifyKaraageDrop(point: Point) {
+  if (point.y >= 64) return 'take-self'
+  if (point.x <= 34) return 'give-left'
+  if (point.x >= 66) return 'give-right'
+  if (point.y <= 49) return 'return'
+  return 'table-other'
+}
+
+function isEndingBin(point: Point) {
+  return point.x <= 31 && point.y >= 68
 }
 
 function SceneShell({ scene, fallback, label, className, children }: {
@@ -67,21 +102,24 @@ function SceneShell({ scene, fallback, label, className, children }: {
   const [failedScene, setFailedScene] = useState<Scene['id'] | null>(null)
   const [imageAspect, setImageAspect] = useState<number | null>(null)
   const source: ArtSource = failedScene === scene ? 'fallback' : 'generated'
-  const shellStyle = imageAspect
-    ? ({ '--scene-aspect': String(imageAspect) } as CSSProperties)
-    : undefined
+  const imageSrc = source === 'generated' ? `/scene-art/${scene}.png` : fallback
+  const shellStyle: SceneStyle = {
+    '--scene-image': `url("${imageSrc}")`,
+    ...(imageAspect ? { '--scene-aspect': String(imageAspect) } : {}),
+  }
+
+  const loaded = (event: SyntheticEvent<HTMLImageElement>) => {
+    const { naturalWidth, naturalHeight } = event.currentTarget
+    if (naturalWidth > 0 && naturalHeight > 0) setImageAspect(naturalWidth / naturalHeight)
+  }
 
   return <div className={`art ${className}`} data-art-source={source} aria-label={label} style={shellStyle}>
     <img
       key={`${scene}-${source}`}
       className="scene-background"
-      src={source === 'generated' ? `/scene-art/${scene}.png` : fallback}
+      src={imageSrc}
       alt=""
-      onLoad={(event: unknown) => {
-        const image = (event as { currentTarget: HTMLImageElement }).currentTarget
-        const { naturalWidth, naturalHeight } = image
-        if (naturalWidth > 0 && naturalHeight > 0) setImageAspect(naturalWidth / naturalHeight)
-      }}
+      onLoad={loaded}
       onError={() => { if (source === 'generated') setFailedScene(scene) }}
     />
     {children}
@@ -100,93 +138,131 @@ function releaseCapture(element: HTMLButtonElement, pointerId: number) {
   }
 }
 
-function Draggable({ className, label, children, onDrop, onReturn, onKeyDown, style }: {
+function FreeDraggable({ className, label, children, onDrop, onKeyDown, style, disabled = false }: {
   className: string
   label: string
   children?: ReactNode
-  onDrop: (target: string) => void
-  onReturn?: () => void
+  onDrop: (point: Point) => void
   onKeyDown?: (event: KeyboardEvent<HTMLButtonElement>) => void
   style: CSSProperties
+  disabled?: boolean
 }) {
   const origin = useRef({ x: 0, y: 0 })
   const pointerId = useRef<number | null>(null)
-  const draggingRef = useRef(false)
+  const baseOffset = useRef({ x: 0, y: 0 })
+  const moved = useRef(false)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const [dragging, setDragging] = useState(false)
+  const [picked, setPicked] = useState(false)
+  const [snapshot, setSnapshot] = useState<CSSProperties | null>(null)
 
-  const reset = (element?: HTMLButtonElement, id?: number) => {
-    if (element && id !== undefined) releaseCapture(element, id)
-    pointerId.current = null
-    draggingRef.current = false
-    setDragging(false)
-    setOffset({ x: 0, y: 0 })
+  const createSnapshot = (event: PointerEvent<HTMLButtonElement>) => {
+    if (snapshot) return
+    const buttonRect = event.currentTarget.getBoundingClientRect()
+    const scenePoint = pointInScene(event.currentTarget, event.clientX, event.clientY)
+    if (!scenePoint.artRect) return
+    const size = 68
+    const localX = event.clientX - buttonRect.left
+    const localY = event.clientY - buttonRect.top
+    const imageX = event.clientX - scenePoint.artRect.left
+    const imageY = event.clientY - scenePoint.artRect.top
+    setSnapshot({
+      left: `${localX}px`,
+      top: `${localY}px`,
+      width: `${size}px`,
+      height: `${size}px`,
+      backgroundImage: 'var(--scene-image)',
+      backgroundSize: `${scenePoint.artRect.width}px ${scenePoint.artRect.height}px`,
+      backgroundPosition: `${-imageX + size / 2}px ${-imageY + size / 2}px`,
+    })
   }
 
   const down = (event: PointerEvent<HTMLButtonElement>) => {
-    if (event.button !== 0 || pointerId.current !== null) return
+    if (disabled || event.button !== 0 || pointerId.current !== null) return
     event.preventDefault()
     origin.current = { x: event.clientX, y: event.clientY }
     pointerId.current = event.pointerId
-    draggingRef.current = true
+    moved.current = false
+    setPicked(true)
     setDragging(true)
+    createSnapshot(event)
     try { event.currentTarget.setPointerCapture(event.pointerId) } catch { /* non-fatal */ }
   }
 
   const move = (event: PointerEvent<HTMLButtonElement>) => {
-    if (!draggingRef.current || pointerId.current !== event.pointerId) return
-    setOffset({ x: event.clientX - origin.current.x, y: event.clientY - origin.current.y })
+    if (!dragging || pointerId.current !== event.pointerId) return
+    const dx = event.clientX - origin.current.x
+    const dy = event.clientY - origin.current.y
+    if (Math.hypot(dx, dy) > 8) moved.current = true
+    setOffset({ x: baseOffset.current.x + dx, y: baseOffset.current.y + dy })
   }
 
   const up = (event: PointerEvent<HTMLButtonElement>) => {
-    if (!draggingRef.current || pointerId.current !== event.pointerId) return
-    const target = document.elementsFromPoint(event.clientX, event.clientY)
-      .map(element => element.closest<HTMLElement>('[data-drop]'))
-      .find(Boolean)?.dataset.drop
-    reset(event.currentTarget, event.pointerId)
-    if (target) onDrop(target)
-    else onReturn?.()
+    if (pointerId.current !== event.pointerId) return
+    const scenePoint = pointInScene(event.currentTarget, event.clientX, event.clientY)
+    const dx = scenePoint.clientX - origin.current.x
+    const dy = scenePoint.clientY - origin.current.y
+    const finalOffset = { x: baseOffset.current.x + dx, y: baseOffset.current.y + dy }
+    releaseCapture(event.currentTarget, event.pointerId)
+    pointerId.current = null
+    setDragging(false)
+
+    if (!moved.current) {
+      setOffset(baseOffset.current)
+      return
+    }
+
+    baseOffset.current = finalOffset
+    setOffset(finalOffset)
+    onDrop(scenePoint.point)
   }
 
   const cancel = (event: PointerEvent<HTMLButtonElement>) => {
     if (pointerId.current !== event.pointerId) return
-    reset(event.currentTarget, event.pointerId)
+    releaseCapture(event.currentTarget, event.pointerId)
+    pointerId.current = null
+    moved.current = false
+    setDragging(false)
+    setOffset(baseOffset.current)
   }
 
-  return <button
-    type="button"
-    className={`scene-hit draggable-hit ${className} ${dragging ? 'dragging' : ''}`}
-    aria-label={label}
-    onPointerDown={down}
-    onPointerMove={move}
-    onPointerUp={up}
-    onPointerCancel={cancel}
-    onKeyDown={onKeyDown}
-    style={{ ...style, transform: `translate3d(${offset.x}px,${offset.y}px,0)` }}
-  >{children}</button>
-}
-
-function DropZone({ name, box }: { name: string; box: HitBox }) {
-  return <span className="drop-zone" data-drop={name} style={hitStyle(box)} aria-hidden="true" />
+  return <>
+    {picked && <span className="drag-origin-softener" style={style} aria-hidden="true" />}
+    <button
+      type="button"
+      className={`scene-hit draggable-hit ${className} ${picked ? 'picked' : ''} ${dragging ? 'dragging' : ''}`}
+      aria-label={label}
+      aria-pressed={picked}
+      disabled={disabled}
+      onPointerDown={down}
+      onPointerMove={move}
+      onPointerUp={up}
+      onPointerCancel={cancel}
+      onKeyDown={onKeyDown}
+      style={{ ...style, transform: `translate3d(${offset.x}px,${offset.y}px,0)` }}
+    >
+      {snapshot && <span className="drag-snapshot" style={snapshot} aria-hidden="true" />}
+      {children}
+    </button>
+  </>
 }
 
 function Train({ acted, onAction }: Omit<Props, 'sceneId'>) {
   const hit = sceneHitAreas.train
   return <SceneShell scene="train" fallback={trainArtwork} className="train" label="電車内。自分の隣の座席をバッグが占め、その前に座りたそうな乗客が立っている">
     <>
-      <DropZone name="lap" box={hit.lap} />
-      <DropZone name="floor" box={hit.floor} />
       <button className="scene-hit player-hit" style={hitStyle(hit.player)} aria-label="座っている自分。押すと立つ" onClick={() => onAction('stand')} />
-      {!acted && <Draggable
+      <FreeDraggable
         className="bag-hit"
         style={hitStyle(hit.bag)}
-        label="隣の座席のバッグ。膝か床へドラッグできる。キーボードでは左矢印で膝、下矢印で床"
-        onDrop={target => { if (target === 'lap') onAction('bag-lap'); else if (target === 'floor') onAction('bag-floor') }}
+        label="バッグ。タップすると選択し、そのまま画面内の好きな場所へドラッグできる。キーボードでは左矢印で膝、下矢印で床"
+        disabled={Boolean(acted)}
+        onDrop={point => onAction(classifyTrainDrop(point))}
         onKeyDown={event => {
           if (event.key === 'ArrowLeft') { event.preventDefault(); onAction('bag-lap') }
           if (event.key === 'ArrowDown') { event.preventDefault(); onAction('bag-floor') }
         }}
-      ><span className="fallback-control">バッグ</span></Draggable>}
+      ><span className="fallback-control">バッグ</span></FreeDraggable>
     </>
   </SceneShell>
 }
@@ -257,24 +333,18 @@ function Elevator({ onAction }: Omit<Props, 'sceneId'>) {
 function Karaage({ acted, onAction }: Omit<Props, 'sceneId'>) {
   const hit = sceneHitAreas.karaage
   return <SceneShell scene="karaage" fallback={karaageArtwork} className="dining" label="4人で囲む食卓。中央の大皿に唐揚げがひとつ残り、全員の視線がそこへ向いている">
-    <>
-      <DropZone name="give-left" box={hit.leftPlate} />
-      <DropZone name="give-right" box={hit.rightPlate} />
-      <DropZone name="take-self" box={hit.ownPlate} />
-      <DropZone name="return" box={hit.sharedPlate} />
-      {!acted && <Draggable
-        className="karaage-hit"
-        style={hitStyle(hit.food)}
-        label="最後の唐揚げ。自分や他の人の皿、中央の皿へドラッグできる。キーボードでは上下左右"
-        onDrop={onAction}
-        onReturn={() => undefined}
-        onKeyDown={event => {
-          const keys: Record<string, string> = { ArrowDown: 'take-self', ArrowLeft: 'give-left', ArrowRight: 'give-right', ArrowUp: 'return' }
-          const action = keys[event.key]
-          if (action) { event.preventDefault(); onAction(action) }
-        }}
-      ><span className="fallback-control fallback-karaage">●</span></Draggable>}
-    </>
+    <FreeDraggable
+      className="karaage-hit"
+      style={hitStyle(hit.food)}
+      label="最後の唐揚げ。タップすると選択し、そのまま画面内の好きな場所へドラッグできる。キーボードでは上下左右"
+      disabled={Boolean(acted)}
+      onDrop={point => onAction(classifyKaraageDrop(point))}
+      onKeyDown={event => {
+        const keys: Record<string, string> = { ArrowDown: 'take-self', ArrowLeft: 'give-left', ArrowRight: 'give-right', ArrowUp: 'return' }
+        const action = keys[event.key]
+        if (action) { event.preventDefault(); onAction(action) }
+      }}
+    ><span className="fallback-control fallback-karaage">●</span></FreeDraggable>
   </SceneShell>
 }
 
@@ -301,15 +371,15 @@ function Ending({ acted, onAction }: Omit<Props, 'sceneId'>) {
   const [tidy, setTidy] = useState(false)
   return <SceneShell scene="ending" fallback={endingArtwork} className="final-scene" label="仕事の終了画面。部屋の端にはゴミ箱と小さな紙くずがある">
     <>
-      <DropZone name="bin" box={hit.bin} />
       <button className="scene-hit finish-hit" style={hitStyle(hit.finish)} aria-label="終了" onClick={() => onAction(tidy ? 'trash' : 'finish')}><span className="fallback-control">終了</span></button>
-      {!tidy && !acted && <Draggable
+      <FreeDraggable
         className="paper-hit"
         style={hitStyle(hit.paper)}
-        label="床の端の紙くず。ゴミ箱へドラッグできる。キーボードでは左矢印でゴミ箱へ入れる"
-        onDrop={target => { if (target === 'bin') setTidy(true) }}
+        label="紙くず。タップすると選択し、画面内の好きな場所へドラッグできる。ゴミ箱へ入れてから終了することもできる。キーボードでは左矢印でゴミ箱へ入れる"
+        disabled={Boolean(acted)}
+        onDrop={point => setTidy(isEndingBin(point))}
         onKeyDown={event => { if (event.key === 'ArrowLeft') { event.preventDefault(); setTidy(true) } }}
-      ><span className="fallback-control fallback-paper">◇</span></Draggable>}
+      ><span className="fallback-control fallback-paper">◇</span></FreeDraggable>
     </>
   </SceneShell>
 }
