@@ -27,11 +27,11 @@ type VibratingNavigator = Navigator & { vibrate?: (pattern: number | number[]) =
 export const sceneHitAreas = {
   train: {
     stand: { left: 13, top: 57, width: 16, height: 12 },
-    bag: { left: 34, top: 55, width: 20, height: 14 },
+    bag: { left: 37.5, top: 55, width: 20, height: 14 },
   },
   elevator: {
-    open: { left: 79, top: 55.6, width: 13, height: 9 },
-    close: { left: 79, top: 65.8, width: 13, height: 9 },
+    open: { left: 79, top: 47.8, width: 13, height: 9 },
+    close: { left: 79, top: 58.5, width: 13, height: 9 },
   },
   karaage: {
     food: { left: 40.5, top: 42.5, width: 19, height: 12.5 },
