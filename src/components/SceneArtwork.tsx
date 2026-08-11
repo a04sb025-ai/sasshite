@@ -65,14 +65,23 @@ function SceneShell({ scene, fallback, label, className, children }: {
   children: ReactNode
 }) {
   const [failedScene, setFailedScene] = useState<Scene['id'] | null>(null)
+  const [imageAspect, setImageAspect] = useState<number | null>(null)
   const source: ArtSource = failedScene === scene ? 'fallback' : 'generated'
+  const shellStyle = imageAspect
+    ? ({ '--scene-aspect': String(imageAspect) } as CSSProperties)
+    : undefined
 
-  return <div className={`art ${className}`} data-art-source={source} aria-label={label}>
+  return <div className={`art ${className}`} data-art-source={source} aria-label={label} style={shellStyle}>
     <img
       key={`${scene}-${source}`}
       className="scene-background"
       src={source === 'generated' ? `/scene-art/${scene}.png` : fallback}
       alt=""
+      onLoad={(event: unknown) => {
+        const image = (event as { currentTarget: HTMLImageElement }).currentTarget
+        const { naturalWidth, naturalHeight } = image
+        if (naturalWidth > 0 && naturalHeight > 0) setImageAspect(naturalWidth / naturalHeight)
+      }}
       onError={() => { if (source === 'generated') setFailedScene(scene) }}
     />
     {children}
