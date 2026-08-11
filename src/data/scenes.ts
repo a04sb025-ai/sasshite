@@ -6,6 +6,7 @@ export const scenes: Scene[] = [
   { id: 'train', eyebrow: '電車', timeoutMs: 12000, actions: [
     action('bag-lap', 'バッグを膝に移した', '席がひとつ空いた。', { awareness: 16, kindness: 16 }),
     action('bag-floor', 'バッグを床に置いた', '足もとに、少し場所ができた。', { awareness: 13, kindness: 10, assertiveness: 3 }),
+    action('bag-other', 'バッグを別の場所へ移した', 'バッグの場所が変わって、空気も少し動いた。', { awareness: 7, assertiveness: 5, hesitation: 3 }),
     action('stand', '席を立った', '座席がふたつ、並んで空いた。', { kindness: 13, assertiveness: 8 }),
     action('wait', 'しばらく、そのままにした', '電車は、次の駅へ向かった。', { nerve: 11, hesitation: 8 }),
   ]},
@@ -20,6 +21,7 @@ export const scenes: Scene[] = [
     action('give-left', '最後の唐揚げを隣の人の皿へ運んだ', '隣の人が、小さく笑った。', { awareness: 12, kindness: 16 }),
     action('give-right', '最後の唐揚げを向かいの人の皿へ運んだ', '向かいの人が、少し驚いた。', { kindness: 14, assertiveness: 5 }),
     action('return', '唐揚げを持ち上げて、皿へ戻した', '箸が止まり、また静かになった。', { hesitation: 16, awareness: 7 }),
+    action('table-other', '唐揚げをテーブルの別の場所へ動かした', '視線だけが、少しその動きを追った。', { awareness: 5, hesitation: 6, assertiveness: 4 }),
     action('wait', '最後のひとつを見ながら待った', 'しばらく、ひとつのままだった。', { hesitation: 10, awareness: 8 }),
   ]},
   { id: 'meeting', eyebrow: 'オンライン会議', timeoutMs: 12000, actions: [
