@@ -16,34 +16,39 @@ import meetingArtwork from '../assets/scenes/meeting.svg'
 import trainArtwork from '../assets/scenes/train.svg'
 
 type Props = { sceneId: Scene['id']; acted: string | null; onAction: (id: string) => void }
-type ArtSource = 'generated' | 'fallback'
 type HitBox = { left: number; top: number; width: number; height: number }
 type Point = { x: number; y: number }
 type SceneStyle = CSSProperties & { '--scene-aspect'?: string }
+type VibratingNavigator = Navigator & { vibrate?: (pattern: number | number[]) => boolean }
 
 export const sceneHitAreas = {
   train: {
-    player: { left: 6, top: 49, width: 25, height: 35 },
-    bag: { left: 39, top: 61, width: 24, height: 13 },
+    stand: { left: 17, top: 69, width: 14, height: 9 },
+    bag: { left: 48, top: 61, width: 22, height: 12 },
   },
   elevator: {
-    open: { left: 73, top: 50, width: 16, height: 11 },
-    close: { left: 73, top: 62, width: 16, height: 11 },
+    open: { left: 57, top: 50, width: 14, height: 9 },
+    close: { left: 57, top: 61, width: 14, height: 9 },
   },
   karaage: {
-    food: { left: 42, top: 43, width: 18, height: 12 },
+    food: { left: 42.5, top: 45, width: 15, height: 10 },
   },
   meeting: {
-    mic: { left: 18, top: 79, width: 19, height: 12 },
-    hand: { left: 40.5, top: 79, width: 19, height: 12 },
-    chat: { left: 63, top: 79, width: 19, height: 12 },
+    mic: { left: 21, top: 84, width: 14, height: 8.5 },
+    hand: { left: 43, top: 84, width: 14, height: 8.5 },
+    chat: { left: 65, top: 84, width: 14, height: 8.5 },
   },
   ending: {
-    finish: { left: 33, top: 51, width: 34, height: 11 },
-    paper: { left: 76, top: 84, width: 14, height: 10 },
-    bin: { left: 8, top: 78, width: 19, height: 17 },
+    finish: { left: 35, top: 53.5, width: 30, height: 8.5 },
+    paper: { left: 78, top: 86, width: 12, height: 8 },
+    bin: { left: 7, top: 82, width: 16, height: 14 },
   },
 } satisfies Record<Scene['id'], Record<string, HitBox>>
+
+function vibrate(duration: number) {
+  if (typeof navigator === 'undefined') return
+  ;(navigator as VibratingNavigator).vibrate?.(duration)
+}
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
@@ -75,34 +80,30 @@ function pointInScene(element: HTMLElement, clientX: number, clientY: number) {
 }
 
 export function classifyTrainDrop(point: Point) {
-  if (point.y >= 72) return 'bag-floor'
-  if (point.x <= 54 && point.y >= 48) return 'bag-lap'
+  if (point.y >= 80) return 'bag-floor'
+  if (point.x <= 48 && point.y >= 64) return 'bag-lap'
   return 'bag-other'
 }
 
 export function classifyKaraageDrop(point: Point) {
-  if (point.y >= 64) return 'take-self'
-  if (point.x <= 34) return 'give-left'
-  if (point.x >= 66) return 'give-right'
-  if (point.y <= 50) return 'return'
+  if (point.y >= 70) return 'take-self'
+  if (point.x <= 32) return 'give-left'
+  if (point.x >= 68) return 'give-right'
+  if (point.y <= 56) return 'return'
   return 'table-other'
 }
 
 function isEndingBin(point: Point) {
-  return point.x <= 33 && point.y >= 68
+  return point.x <= 30 && point.y >= 78
 }
 
-function SceneShell({ scene, fallback, label, className, children }: {
-  scene: Scene['id']
-  fallback: string
+function SceneShell({ artwork, label, className, children }: {
+  artwork: string
   label: string
   className: string
   children: ReactNode
 }) {
-  const [failedScene, setFailedScene] = useState<Scene['id'] | null>(null)
   const [imageAspect, setImageAspect] = useState<number | null>(null)
-  const source: ArtSource = failedScene === scene ? 'fallback' : 'generated'
-  const imageSrc = source === 'generated' ? `/scene-art/${scene}.png` : fallback
   const shellStyle: SceneStyle = imageAspect ? { '--scene-aspect': String(imageAspect) } : {}
 
   const loaded = (event: SyntheticEvent<HTMLImageElement>) => {
@@ -110,15 +111,8 @@ function SceneShell({ scene, fallback, label, className, children }: {
     if (naturalWidth > 0 && naturalHeight > 0) setImageAspect(naturalWidth / naturalHeight)
   }
 
-  return <div className={`art ${className}`} data-art-source={source} aria-label={label} style={shellStyle}>
-    <img
-      key={`${scene}-${source}`}
-      className="scene-background"
-      src={imageSrc}
-      alt=""
-      onLoad={loaded}
-      onError={() => { if (source === 'generated') setFailedScene(scene) }}
-    />
+  return <div className={`art ${className}`} data-art-source="composed" aria-label={label} style={shellStyle}>
+    <img className="scene-background" src={artwork} alt="" onLoad={loaded} />
     {children}
   </div>
 }
@@ -186,6 +180,7 @@ function DraggableObject({ className, label, children, onDrop, onKeyDown, style,
   const down = (event: PointerEvent<HTMLButtonElement>) => {
     if (disabled || event.button !== 0 || pointerId.current !== null) return
     event.preventDefault()
+    vibrate(10)
     origin.current = { x: event.clientX, y: event.clientY }
     pointerId.current = event.pointerId
     moved.current = false
@@ -199,7 +194,7 @@ function DraggableObject({ className, label, children, onDrop, onKeyDown, style,
     const scenePoint = pointInScene(event.currentTarget, event.clientX, event.clientY)
     const dx = scenePoint.clientX - origin.current.x
     const dy = scenePoint.clientY - origin.current.y
-    if (Math.hypot(dx, dy) > 7) moved.current = true
+    if (Math.hypot(dx, dy) > 10) moved.current = true
     setOffset({ x: baseOffset.current.x + dx, y: baseOffset.current.y + dy })
   }
 
@@ -218,6 +213,7 @@ function DraggableObject({ className, label, children, onDrop, onKeyDown, style,
       return
     }
 
+    vibrate(14)
     baseOffset.current = finalOffset
     setOffset(finalOffset)
     onDrop(scenePoint.point)
@@ -249,9 +245,9 @@ function DraggableObject({ className, label, children, onDrop, onKeyDown, style,
 
 function Train({ acted, onAction }: Omit<Props, 'sceneId'>) {
   const hit = sceneHitAreas.train
-  return <SceneShell scene="train" fallback={trainArtwork} className="train" label="電車内。自分の隣の座席をバッグが占め、その前に座りたそうな乗客が立っている">
+  return <SceneShell artwork={trainArtwork} className="train" label="電車内。自分の隣の座席をバッグが占め、その前に座りたそうな乗客が立っている">
     <>
-      <button type="button" className="scene-hit player-hit" style={hitStyle(hit.player)} aria-label="座っている自分。押すと立つ" onClick={() => onAction('stand')} />
+      <button type="button" className="scene-control stand-control" style={hitStyle(hit.stand)} aria-label="席を立つ" onClick={() => onAction('stand')}><span aria-hidden="true">↥</span></button>
       <DraggableObject
         className="bag-object"
         style={hitStyle(hit.bag)}
@@ -281,6 +277,7 @@ function Elevator({ onAction }: Omit<Props, 'sceneId'>) {
   const startHold = (event: PointerEvent<HTMLButtonElement>) => {
     if (event.button !== 0 || activePointer.current !== null) return
     event.preventDefault()
+    vibrate(8)
     activePointer.current = event.pointerId
     held.current = false
     try { event.currentTarget.setPointerCapture(event.pointerId) } catch { /* non-fatal */ }
@@ -288,6 +285,7 @@ function Elevator({ onAction }: Omit<Props, 'sceneId'>) {
     holdTimer.current = window.setTimeout(() => {
       held.current = true
       holdTimer.current = null
+      vibrate(16)
       onAction('hold-open')
     }, 650)
   }
@@ -308,8 +306,9 @@ function Elevator({ onAction }: Omit<Props, 'sceneId'>) {
     held.current = false
   }
 
-  return <SceneShell scene="elevator" fallback={elevatorArtwork} className="elevator" label="エレベーターの扉が閉まりかけ、廊下の向こうから人が走ってくる">
+  return <SceneShell artwork={elevatorArtwork} className="elevator" label="エレベーターの扉が閉まりかけ、廊下の向こうから人が走ってくる">
     <>
+      <span className="elevator-panel" aria-hidden="true" />
       <button
         type="button"
         className="scene-control elevator-button open-hit"
@@ -329,7 +328,7 @@ function Elevator({ onAction }: Omit<Props, 'sceneId'>) {
 
 function Karaage({ acted, onAction }: Omit<Props, 'sceneId'>) {
   const hit = sceneHitAreas.karaage
-  return <SceneShell scene="karaage" fallback={karaageArtwork} className="dining" label="4人で囲む食卓。中央の大皿に唐揚げがひとつ残り、全員の視線がそこへ向いている">
+  return <SceneShell artwork={karaageArtwork} className="dining" label="4人で囲む食卓。中央の大皿に唐揚げがひとつ残り、全員の視線がそこへ向いている">
     <DraggableObject
       className="karaage-object"
       style={hitStyle(hit.food)}
@@ -353,14 +352,14 @@ function Meeting({ acted, onAction }: Omit<Props, 'sceneId'>) {
     ['chat', 'チャットに短い反応を送る', '…', hit.chat],
   ] as const
 
-  return <SceneShell scene="meeting" fallback={meetingArtwork} className="meeting" label="オンライン会議。司会者が意見を求めたあと、4人が黙って待っている">
+  return <SceneShell artwork={meetingArtwork} className="meeting" label="オンライン会議。司会者が意見を求めたあと、4人が黙って待っている">
     <>{controls.map(([id, label, glyph, box]) => <button
       type="button"
       key={id}
       className={`scene-control meeting-control ${acted === id ? 'selected' : ''}`}
       style={hitStyle(box)}
       aria-label={label}
-      onClick={() => onAction(id)}
+      onClick={() => { vibrate(8); onAction(id) }}
     ><span aria-hidden="true">{glyph}</span></button>)}</>
   </SceneShell>
 }
@@ -369,7 +368,7 @@ function Ending({ acted, onAction }: Omit<Props, 'sceneId'>) {
   const hit = sceneHitAreas.ending
   const [tidy, setTidy] = useState(false)
 
-  return <SceneShell scene="ending" fallback={endingArtwork} className="final-scene" label="仕事の終了画面。部屋の端にはゴミ箱と小さな紙くずがある">
+  return <SceneShell artwork={endingArtwork} className="final-scene" label="仕事の終了画面。部屋の端にはゴミ箱と小さな紙くずがある">
     <>
       <span className={`bin-visual ${tidy ? 'received' : ''}`} style={hitStyle(hit.bin)} aria-hidden="true"><BinSprite /></span>
       <button type="button" className="scene-control finish-hit" style={hitStyle(hit.finish)} aria-label="終了" onClick={() => onAction(tidy ? 'trash' : 'finish')}><span aria-hidden="true">終了</span></button>
