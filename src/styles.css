@@ -73,37 +73,67 @@ button:focus-visible { outline: 3px solid #b45128; outline-offset: 3px; }
 .scene-background { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; user-select: none; pointer-events: none; }
 
 .scene-hit,
-.drop-zone {
+.drag-origin-softener {
   position: absolute;
-  z-index: 5;
   min-width: 44px;
   min-height: 44px;
 }
 .scene-hit {
+  z-index: 5;
   border: 0;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 0;
   background: transparent;
   touch-action: manipulation;
+}
+.scene-hit:not(.draggable-hit):active {
+  background: rgba(255, 248, 224, .24);
+  box-shadow: inset 0 0 0 3px rgba(180, 81, 40, .52), 0 0 0 5px rgba(255, 255, 255, .28);
 }
 .draggable-hit {
   z-index: 8;
   touch-action: none;
   cursor: grab;
+  overflow: visible;
 }
+.draggable-hit:disabled { cursor: default; }
+.draggable-hit.picked { z-index: 18; }
 .draggable-hit.dragging {
-  z-index: 20;
+  z-index: 24;
   cursor: grabbing;
-  outline: 2px dashed rgba(255,255,255,.92);
-  outline-offset: -3px;
-  box-shadow: 0 4px 14px rgba(0,0,0,.18);
 }
-.drop-zone { z-index: 4; pointer-events: auto; background: transparent; }
-.bag-hit.dragging { border: 2px solid #37352f; border-radius: 8px; background: rgba(117,97,81,.9); }
-.karaage-hit.dragging { border: 2px solid #4d3022; border-radius: 50%; background: rgba(169,87,49,.92); }
-.paper-hit.dragging { border: 1px solid #8d887f; border-radius: 3px; background: rgba(246,242,232,.95); }
-.fallback-control { display: none; }
+.drag-origin-softener {
+  z-index: 7;
+  pointer-events: none;
+  border-radius: 14px;
+  background: rgba(237, 232, 219, .08);
+  backdrop-filter: blur(7px) saturate(.75);
+  -webkit-backdrop-filter: blur(7px) saturate(.75);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.22);
+}
+.drag-snapshot {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(1.04);
+  background-repeat: no-repeat;
+  border: 3px solid rgba(255, 251, 239, .96);
+  box-shadow: 0 8px 20px rgba(45, 39, 31, .28), 0 0 0 2px rgba(180, 81, 40, .62);
+}
+.draggable-hit.picked:not(.dragging) .drag-snapshot {
+  animation: picked-pop 170ms ease-out both;
+}
+.draggable-hit.dragging .drag-snapshot {
+  transform: translate(-50%, -50%) scale(1.11);
+  box-shadow: 0 12px 28px rgba(45, 39, 31, .34), 0 0 0 3px rgba(180, 81, 40, .72);
+}
+@keyframes picked-pop {
+  from { transform: translate(-50%, -50%) scale(.88); opacity: .45; }
+  to { transform: translate(-50%, -50%) scale(1.04); opacity: 1; }
+}
 
+.fallback-control { display: none; }
 .art[data-art-source="fallback"] .fallback-control {
   display: grid;
   width: 100%;
