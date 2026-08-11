@@ -27,8 +27,8 @@ export const sceneHitAreas = {
     bag: { left: 48, top: 61, width: 22, height: 12 },
   },
   elevator: {
-    open: { left: 57, top: 50, width: 14, height: 9 },
-    close: { left: 57, top: 61, width: 14, height: 9 },
+    open: { left: 79, top: 50, width: 14, height: 9 },
+    close: { left: 79, top: 61, width: 14, height: 9 },
   },
   karaage: {
     food: { left: 42.5, top: 45, width: 15, height: 10 },
@@ -123,32 +123,46 @@ export function Player({ seated = false }: { seated?: boolean }) {
 
 function BagSprite() {
   return <svg className="object-sprite bag-sprite" viewBox="0 0 96 64" aria-hidden="true">
-    <path d="M28 20c2-11 8-16 20-16s18 5 20 16" fill="none" stroke="currentColor" strokeWidth="7" strokeLinecap="round" />
-    <path d="M9 21c0-5 4-9 9-9h60c5 0 9 4 9 9v31c0 5-4 9-9 9H18c-5 0-9-4-9-9Z" fill="#876b57" stroke="currentColor" strokeWidth="4" />
-    <path d="M11 35c22 8 51 8 74 0" fill="none" stroke="#5f493b" strokeWidth="3" />
-    <path d="M43 31h10v10H43z" fill="#d0a45f" stroke="currentColor" strokeWidth="2" />
+    <defs>
+      <linearGradient id="bagBody" x2="0" y2="1"><stop stopColor="#a98161"/><stop offset=".55" stopColor="#806044"/><stop offset="1" stopColor="#664a36"/></linearGradient>
+      <linearGradient id="bagShine" x2="1" y2="1"><stop stopColor="#d3ad84" stopOpacity=".72"/><stop offset="1" stopColor="#d3ad84" stopOpacity="0"/></linearGradient>
+    </defs>
+    <path d="M27 20C29 8 36 3 48 3s19 5 21 17" fill="none" stroke="#543b2d" strokeWidth="6" strokeLinecap="round" />
+    <path d="M10 23c0-6 5-10 11-10h54c7 0 11 4 11 10v27c0 7-5 11-12 11H21c-7 0-11-4-11-11Z" fill="url(#bagBody)" stroke="#4d382b" strokeWidth="3" />
+    <path d="M13 27c18 7 48 7 70 0" fill="none" stroke="#c49a74" strokeWidth="2" opacity=".62" />
+    <path d="M17 19h62v10H17z" fill="url(#bagShine)" opacity=".7"/>
+    <path d="M47 13v46M15 44h68" stroke="#563e2f" strokeWidth="1.6" opacity=".62" />
+    <rect x="43" y="30" width="10" height="9" rx="2" fill="#caa45f" stroke="#59422f" strokeWidth="1.5" />
+    <path d="M21 59v3M75 59v3" stroke="#4d382b" strokeWidth="4" strokeLinecap="round" />
   </svg>
 }
 
 function KaraageSprite() {
   return <svg className="object-sprite karaage-sprite" viewBox="0 0 72 72" aria-hidden="true">
-    <path d="M16 23 26 11l13 4 12-5 9 12 4 13-8 11-2 13-15 4-12-6-11 1-8-14 4-10Z" fill="#a95e35" stroke="currentColor" strokeWidth="4" strokeLinejoin="round" />
-    <path d="m25 26 8-4m10 5 8-5m-26 17 9 5m8-7 10 5" stroke="#e4a06d" strokeWidth="4" strokeLinecap="round" opacity=".85" />
+    <defs>
+      <radialGradient id="karaageBody" cx="38%" cy="30%" r="72%"><stop stopColor="#d88747"/><stop offset=".5" stopColor="#ac5b31"/><stop offset="1" stopColor="#6f351f"/></radialGradient>
+    </defs>
+    <path d="M15 23 25 11l13 4 12-5 10 11 3 13-7 10-2 13-14 6-13-5-12 1-8-14 5-11Z" fill="url(#karaageBody)" stroke="#6c3823" strokeWidth="2.5" strokeLinejoin="round" />
+    <path d="m23 25 9-5m11 6 9-5m-29 18 10 4m9-7 11 5m-23 9 7-4" stroke="#eba069" strokeWidth="3" strokeLinecap="round" opacity=".72" />
+    <circle cx="25" cy="31" r="3" fill="#f1b37c" opacity=".62"/><circle cx="48" cy="31" r="2.5" fill="#8c4528" opacity=".7"/>
   </svg>
 }
 
 function PaperSprite() {
   return <svg className="object-sprite paper-sprite" viewBox="0 0 64 64" aria-hidden="true">
-    <path d="m13 13 35-5 5 38-31 10-11-17 7-8Z" fill="#f7f3e8" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" />
-    <path d="m18 31 12-5 10 8 8-4M22 46l8-12" fill="none" stroke="#aaa397" strokeWidth="2.5" strokeLinecap="round" />
+    <defs><linearGradient id="paperShade" x2="1" y2="1"><stop stopColor="#fffdf7"/><stop offset="1" stopColor="#ded8cd"/></linearGradient></defs>
+    <path d="m12 15 16-7 21 4 5 14-4 22-15 8-17-5-7-14 6-9Z" fill="url(#paperShade)" stroke="#a8a095" strokeWidth="2" strokeLinejoin="round" />
+    <path d="m17 29 11-7 10 7 11-6M19 47l10-12 9 13m-12-26 3 13" fill="none" stroke="#bbb2a6" strokeWidth="2" strokeLinecap="round" />
   </svg>
 }
 
 function BinSprite() {
   return <svg className="bin-sprite" viewBox="0 0 70 82" aria-hidden="true">
-    <path d="M15 23h40l-4 51H19Z" fill="rgba(242,239,229,.92)" stroke="currentColor" strokeWidth="4" />
-    <path d="M10 22h50M25 14h20" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
-    <path d="M29 32v31M41 32v31" stroke="#aaa69d" strokeWidth="3" />
+    <defs><linearGradient id="binMetal" x1="0" x2="1"><stop stopColor="#626865"/><stop offset=".45" stopColor="#aeb3af"/><stop offset="1" stopColor="#5f6562"/></linearGradient></defs>
+    <path d="M14 23h42l-5 51H19Z" fill="url(#binMetal)" stroke="#454a47" strokeWidth="3" />
+    <path d="M9 22h52M25 14h20" stroke="#454a47" strokeWidth="5" strokeLinecap="round" />
+    <path d="M28 31v33M42 31v33" stroke="#d5d8d5" strokeWidth="2" opacity=".55" />
+    <path d="M18 27h34" stroke="#e3e5e2" strokeWidth="2" opacity=".4" />
   </svg>
 }
 
