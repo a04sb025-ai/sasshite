@@ -1,4 +1,12 @@
-import { useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
+import {
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent,
+  type ReactNode,
+} from 'react'
 import type { Scene } from '../types'
 import endingArtwork from '../assets/scenes/ending.svg'
 import elevatorArtwork from '../assets/scenes/elevator.svg'
@@ -7,102 +15,294 @@ import meetingArtwork from '../assets/scenes/meeting.svg'
 import trainArtwork from '../assets/scenes/train.svg'
 
 type Props = { sceneId: Scene['id']; acted: string | null; onAction: (id: string) => void }
+type ArtSource = 'generated' | 'fallback'
+type HitBox = { left: number; top: number; width: number; height: number }
 
-function SceneBackground({ scene, fallback }: { scene: Scene['id']; fallback: string }) {
-  const [generatedUnavailable, setGeneratedUnavailable] = useState(false)
-  return <img
-    className="scene-background"
-    src={generatedUnavailable ? fallback : `/scene-art/${scene}.png`}
-    alt=""
-    onError={() => setGeneratedUnavailable(true)}
-  />
+export const sceneHitAreas = {
+  train: {
+    player: { left: 9, top: 49, width: 29, height: 34 },
+    bag: { left: 39, top: 57, width: 26, height: 19 },
+    lap: { left: 18, top: 63, width: 25, height: 18 },
+    floor: { left: 10, top: 81, width: 78, height: 16 },
+  },
+  elevator: {
+    open: { left: 73, top: 48, width: 18, height: 10 },
+    close: { left: 73, top: 59, width: 18, height: 10 },
+  },
+  karaage: {
+    food: { left: 42, top: 43, width: 18, height: 16 },
+    leftPlate: { left: 13, top: 45, width: 22, height: 17 },
+    rightPlate: { left: 65, top: 45, width: 22, height: 17 },
+    ownPlate: { left: 39, top: 70, width: 23, height: 17 },
+    sharedPlate: { left: 34, top: 35, width: 32, height: 25 },
+  },
+  meeting: {
+    mic: { left: 20, top: 81, width: 18, height: 12 },
+    hand: { left: 41, top: 81, width: 18, height: 12 },
+    chat: { left: 62, top: 81, width: 18, height: 12 },
+  },
+  ending: {
+    finish: { left: 35, top: 52, width: 30, height: 11 },
+    paper: { left: 78, top: 86, width: 14, height: 10 },
+    bin: { left: 7, top: 79, width: 20, height: 17 },
+  },
+} satisfies Record<Scene['id'], Record<string, HitBox>>
+
+function hitStyle(box: HitBox): CSSProperties {
+  return {
+    left: `${box.left}%`,
+    top: `${box.top}%`,
+    width: `${box.width}%`,
+    height: `${box.height}%`,
+  }
+}
+
+function SceneShell({ scene, fallback, label, className, children }: {
+  scene: Scene['id']
+  fallback: string
+  label: string
+  className: string
+  children: ReactNode
+}) {
+  const [failedScene, setFailedScene] = useState<Scene['id'] | null>(null)
+  const source: ArtSource = failedScene === scene ? 'fallback' : 'generated'
+
+  return <div className={`art ${className}`} data-art-source={source} aria-label={label}>
+    <img
+      key={`${scene}-${source}`}
+      className="scene-background"
+      src={source === 'generated' ? `/scene-art/${scene}.png` : fallback}
+      alt=""
+      onError={() => { if (source === 'generated') setFailedScene(scene) }}
+    />
+    {children}
+  </div>
 }
 
 export function Player({ seated = false }: { seated?: boolean }) {
   return <span className={`character player ${seated ? 'seated' : ''}`} aria-hidden="true"><i className="hair" /><i className="head"><b className="face" /></i><i className="body" /><i className="arm" /><i className="legs" /></span>
 }
 
-function Person({ className = '' }: { className?: string }) {
-  return <span className={`character person ${className}`} aria-hidden="true"><i className="hair" /><i className="head"><b className="face" /></i><i className="body" /><i className="arm" /><i className="legs" /></span>
+function releaseCapture(element: HTMLButtonElement, pointerId: number) {
+  try {
+    if (element.hasPointerCapture(pointerId)) element.releasePointerCapture(pointerId)
+  } catch {
+    // Pointer capture can already be lost after cancellation/unmount.
+  }
 }
 
-function Draggable({ className, label, children, onDrop, onReturn, onKeyDown }: {
-  className: string; label: string; children: ReactNode; onDrop: (target: string) => void; onReturn?: () => void; onKeyDown?: (event: KeyboardEvent<HTMLButtonElement>) => void
+function Draggable({ className, label, children, onDrop, onReturn, onKeyDown, style }: {
+  className: string
+  label: string
+  children?: ReactNode
+  onDrop: (target: string) => void
+  onReturn?: () => void
+  onKeyDown?: (event: KeyboardEvent<HTMLButtonElement>) => void
+  style: CSSProperties
 }) {
   const origin = useRef({ x: 0, y: 0 })
+  const pointerId = useRef<number | null>(null)
+  const draggingRef = useRef(false)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const [dragging, setDragging] = useState(false)
-  const down = (event: PointerEvent<HTMLButtonElement>) => {
-    event.currentTarget.setPointerCapture(event.pointerId)
-    origin.current = { x: event.clientX, y: event.clientY }
-    setDragging(true)
+
+  const reset = (element?: HTMLButtonElement, id?: number) => {
+    if (element && id !== undefined) releaseCapture(element, id)
+    pointerId.current = null
+    draggingRef.current = false
+    setDragging(false)
+    setOffset({ x: 0, y: 0 })
   }
+
+  const down = (event: PointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0 || pointerId.current !== null) return
+    event.preventDefault()
+    origin.current = { x: event.clientX, y: event.clientY }
+    pointerId.current = event.pointerId
+    draggingRef.current = true
+    setDragging(true)
+    try { event.currentTarget.setPointerCapture(event.pointerId) } catch { /* non-fatal */ }
+  }
+
   const move = (event: PointerEvent<HTMLButtonElement>) => {
-    if (!dragging) return
+    if (!draggingRef.current || pointerId.current !== event.pointerId) return
     setOffset({ x: event.clientX - origin.current.x, y: event.clientY - origin.current.y })
   }
+
   const up = (event: PointerEvent<HTMLButtonElement>) => {
-    if (!dragging) return
-    setDragging(false)
-    event.currentTarget.releasePointerCapture(event.pointerId)
+    if (!draggingRef.current || pointerId.current !== event.pointerId) return
     const target = document.elementsFromPoint(event.clientX, event.clientY)
       .map(element => element.closest<HTMLElement>('[data-drop]'))
       .find(Boolean)?.dataset.drop
-    setOffset({ x: 0, y: 0 })
-    if (target) onDrop(target); else onReturn?.()
+    reset(event.currentTarget, event.pointerId)
+    if (target) onDrop(target)
+    else onReturn?.()
   }
-  return <button type="button" className={`${className} ${dragging ? 'dragging' : ''}`} aria-label={label} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={() => { setDragging(false); setOffset({ x: 0, y: 0 }) }} onKeyDown={onKeyDown} style={{ transform: `translate3d(${offset.x}px,${offset.y}px,0)` }}>{children}</button>
+
+  const cancel = (event: PointerEvent<HTMLButtonElement>) => {
+    if (pointerId.current !== event.pointerId) return
+    reset(event.currentTarget, event.pointerId)
+  }
+
+  return <button
+    type="button"
+    className={`scene-hit draggable-hit ${className} ${dragging ? 'dragging' : ''}`}
+    aria-label={label}
+    onPointerDown={down}
+    onPointerMove={move}
+    onPointerUp={up}
+    onPointerCancel={cancel}
+    onKeyDown={onKeyDown}
+    style={{ ...style, transform: `translate3d(${offset.x}px,${offset.y}px,0)` }}
+  >{children}</button>
+}
+
+function DropZone({ name, box }: { name: string; box: HitBox }) {
+  return <span className="drop-zone" data-drop={name} style={hitStyle(box)} aria-hidden="true" />
 }
 
 function Train({ acted, onAction }: Omit<Props, 'sceneId'>) {
-  return <div className="art train" aria-label="電車内。隣の座席にはバッグがあり、その前に乗客が立っている">
-    <SceneBackground scene="train" fallback={trainArtwork} />
-    <div className="train-window"><i /><span>つぎは　若葉町</span><i /></div><div className="route-sign">若葉町　→　青葉台</div><div className="strap-row"><i /><i /><i /></div>
-    <div className="waiting-passenger"><Person /></div><div className="train-floor" data-drop="floor" />
-    <div className="bench"><button className="player-button" aria-label="座っている自分。押すと立つ" onClick={() => onAction('stand')}><Player seated /></button><span className="seat-space"><i className="lap-zone" data-drop="lap" /></span></div>
-    {!acted && <Draggable className="bag" label="隣の座席のバッグ。ドラッグして動かす。キーボードでは左矢印で膝、下矢印で床へ移動" onDrop={target => onAction(target === 'lap' ? 'bag-lap' : 'bag-floor')} onKeyDown={event => { if (event.key === 'ArrowLeft') onAction('bag-lap'); if (event.key === 'ArrowDown') onAction('bag-floor') }}><i className="bag-handle" /><i className="bag-pocket" /></Draggable>}
-  </div>
+  const hit = sceneHitAreas.train
+  return <SceneShell scene="train" fallback={trainArtwork} className="train" label="電車内。自分の隣の座席をバッグが占め、その前に座りたそうな乗客が立っている">
+    <>
+      <DropZone name="lap" box={hit.lap} />
+      <DropZone name="floor" box={hit.floor} />
+      <button className="scene-hit player-hit" style={hitStyle(hit.player)} aria-label="座っている自分。押すと立つ" onClick={() => onAction('stand')} />
+      {!acted && <Draggable
+        className="bag-hit"
+        style={hitStyle(hit.bag)}
+        label="隣の座席のバッグ。膝か床へドラッグできる。キーボードでは左矢印で膝、下矢印で床"
+        onDrop={target => { if (target === 'lap') onAction('bag-lap'); else if (target === 'floor') onAction('bag-floor') }}
+        onKeyDown={event => {
+          if (event.key === 'ArrowLeft') { event.preventDefault(); onAction('bag-lap') }
+          if (event.key === 'ArrowDown') { event.preventDefault(); onAction('bag-floor') }
+        }}
+      ><span className="fallback-control">バッグ</span></Draggable>}
+    </>
+  </SceneShell>
 }
 
-function Elevator({ acted, onAction }: Omit<Props, 'sceneId'>) {
-  const holdTimer = useRef<number | undefined>(undefined)
+function Elevator({ onAction }: Omit<Props, 'sceneId'>) {
+  const hit = sceneHitAreas.elevator
+  const holdTimer = useRef<number | null>(null)
+  const activePointer = useRef<number | null>(null)
   const held = useRef(false)
-  const startHold = () => { held.current = false; holdTimer.current = window.setTimeout(() => { held.current = true; onAction('hold-open') }, 650) }
-  const endHold = () => { window.clearTimeout(holdTimer.current); if (!held.current) onAction('open') }
-  return <div className="art elevator" aria-label="エレベーターの扉が閉まりかけ、廊下の向こうから人が走ってくる">
-    <SceneBackground scene="elevator" fallback={elevatorArtwork} />
-    <div className="hall"><i className="hall-light" /><span className="runner"><Person className="running" /></span><span className="runner-arm" /></div>
-    <div className={`lift-doors ${acted === 'open' || acted === 'hold-open' ? 'open' : acted === 'close' ? 'shut' : ''}`}><i /><i /></div>
-    <div className="panel"><span>5</span><button aria-label="開く" onPointerDown={startHold} onPointerUp={endHold} onPointerLeave={() => window.clearTimeout(holdTimer.current)}><b>開</b><i>◁　▷</i></button><button aria-label="閉じる" onClick={() => onAction('close')}><b>閉</b><i>▷　◁</i></button></div>
-  </div>
+
+  const clearHold = () => {
+    if (holdTimer.current !== null) window.clearTimeout(holdTimer.current)
+    holdTimer.current = null
+  }
+
+  const startHold = (event: PointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0 || activePointer.current !== null) return
+    event.preventDefault()
+    activePointer.current = event.pointerId
+    held.current = false
+    try { event.currentTarget.setPointerCapture(event.pointerId) } catch { /* non-fatal */ }
+    clearHold()
+    holdTimer.current = window.setTimeout(() => {
+      held.current = true
+      holdTimer.current = null
+      onAction('hold-open')
+    }, 650)
+  }
+
+  const finishHold = (event: PointerEvent<HTMLButtonElement>) => {
+    if (activePointer.current !== event.pointerId) return
+    clearHold()
+    releaseCapture(event.currentTarget, event.pointerId)
+    activePointer.current = null
+    if (!held.current) onAction('open')
+  }
+
+  const cancelHold = (event: PointerEvent<HTMLButtonElement>) => {
+    if (activePointer.current !== event.pointerId) return
+    clearHold()
+    releaseCapture(event.currentTarget, event.pointerId)
+    activePointer.current = null
+    held.current = false
+  }
+
+  const openByKeyboard = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === 'ArrowUp') { event.preventDefault(); onAction('hold-open') }
+  }
+
+  return <SceneShell scene="elevator" fallback={elevatorArtwork} className="elevator" label="エレベーターの扉が閉まりかけ、廊下の向こうから人が走ってくる">
+    <>
+      <button
+        className="scene-hit elevator-button open-hit"
+        style={hitStyle(hit.open)}
+        aria-label="開く。長押しもできる。キーボードでは上矢印が長押し相当"
+        onPointerDown={startHold}
+        onPointerUp={finishHold}
+        onPointerCancel={cancelHold}
+        onPointerLeave={cancelHold}
+        onKeyDown={openByKeyboard}
+        onClick={(event: MouseEvent<HTMLButtonElement>) => { if (event.detail === 0) onAction('open') }}
+      ><span className="fallback-control">開</span></button>
+      <button className="scene-hit elevator-button close-hit" style={hitStyle(hit.close)} aria-label="閉じる" onClick={() => onAction('close')}><span className="fallback-control">閉</span></button>
+    </>
+  </SceneShell>
 }
 
 function Karaage({ acted, onAction }: Omit<Props, 'sceneId'>) {
-  return <div className="art dining" aria-label="4人で囲む食卓。中央の大皿に唐揚げがひとつ残っている">
-    <SceneBackground scene="karaage" fallback={karaageArtwork} />
-    <div className="diner top"><Person /></div><div className="diner left"><Person /></div><div className="diner right"><Person /></div><div className="diner bottom"><Player /></div>
-    <div className="dining-table"><span className="plate top-plate" /><span className="plate other-a" data-drop="give-left" /><span className="plate other-b" data-drop="give-right" /><span className="plate mine" data-drop="take-self" /><span className="serving-plate" data-drop="return"><i className="crumbs" /></span><i className="glass glass-a" /><i className="glass glass-b" /><i className="chopsticks" /></div>
-    {!acted && <Draggable className="karaage" label="最後の唐揚げ。皿へドラッグする。キーボードでは下で自分、左右で他の人、上で元の皿" onDrop={onAction} onReturn={() => onAction('return')} onKeyDown={event => { const keys: Record<string,string> = { ArrowDown: 'take-self', ArrowLeft: 'give-left', ArrowRight: 'give-right', ArrowUp: 'return' }; if (keys[event.key]) onAction(keys[event.key]) }}><i /></Draggable>}
-  </div>
+  const hit = sceneHitAreas.karaage
+  return <SceneShell scene="karaage" fallback={karaageArtwork} className="dining" label="4人で囲む食卓。中央の大皿に唐揚げがひとつ残り、全員の視線がそこへ向いている">
+    <>
+      <DropZone name="give-left" box={hit.leftPlate} />
+      <DropZone name="give-right" box={hit.rightPlate} />
+      <DropZone name="take-self" box={hit.ownPlate} />
+      <DropZone name="return" box={hit.sharedPlate} />
+      {!acted && <Draggable
+        className="karaage-hit"
+        style={hitStyle(hit.food)}
+        label="最後の唐揚げ。自分や他の人の皿、中央の皿へドラッグできる。キーボードでは上下左右"
+        onDrop={onAction}
+        onReturn={() => undefined}
+        onKeyDown={event => {
+          const keys: Record<string, string> = { ArrowDown: 'take-self', ArrowLeft: 'give-left', ArrowRight: 'give-right', ArrowUp: 'return' }
+          const action = keys[event.key]
+          if (action) { event.preventDefault(); onAction(action) }
+        }}
+      ><span className="fallback-control fallback-karaage">●</span></Draggable>}
+    </>
+  </SceneShell>
 }
 
 function Meeting({ acted, onAction }: Omit<Props, 'sceneId'>) {
-  return <div className="art meeting" aria-label="オンライン会議。司会者が誰か意見ありますかと尋ね、沈黙している">
-    <SceneBackground scene="meeting" fallback={meetingArtwork} />
-    <div className="meeting-bar"><i /> team meeting <span>10:42</span></div><div className="call-grid"><div><Person /><small>田中</small></div><div><Person /><small>佐藤</small></div><div><Player /><small>自分</small></div><div><Person /><small>鈴木</small></div></div>
-    <p className="speech">「誰か、意見ありますか？」</p><span className="silence">……</span>
-    <div className="call-controls"><button className={acted === 'mic' ? 'selected' : ''} onClick={() => onAction('mic')} aria-label="マイクをオンにする"><b>●</b><small>ミュート</small></button><button onClick={() => onAction('hand')} aria-label="手を挙げる"><b>♧</b><small>挙手</small></button><button onClick={() => onAction('chat')} aria-label="チャットに短い反応を送る"><b>□</b><small>チャット</small></button></div>
-  </div>
+  const hit = sceneHitAreas.meeting
+  const controls = [
+    ['mic', 'マイクをオンにする', 'ミュート', hit.mic],
+    ['hand', '手を挙げる', '挙手', hit.hand],
+    ['chat', 'チャットに短い反応を送る', 'チャット', hit.chat],
+  ] as const
+  return <SceneShell scene="meeting" fallback={meetingArtwork} className="meeting" label="オンライン会議。司会者が意見を求めたあと、4人が黙って待っている">
+    <>{controls.map(([id, label, fallbackLabel, box]) => <button
+      key={id}
+      className={`scene-hit meeting-hit ${acted === id ? 'selected' : ''}`}
+      style={hitStyle(box)}
+      aria-label={label}
+      onClick={() => onAction(id)}
+    ><span className="fallback-control">{fallbackLabel}</span></button>)}</>
+  </SceneShell>
 }
 
 function Ending({ acted, onAction }: Omit<Props, 'sceneId'>) {
+  const hit = sceneHitAreas.ending
   const [tidy, setTidy] = useState(false)
-  return <div className="art final-scene" aria-label="終了画面。部屋の端にはゴミ箱と小さな紙くずがある">
-    <SceneBackground scene="ending" fallback={endingArtwork} />
-    <div className="office-wall"><i className="clock" /><span className="baseboard" /></div><div className="end-card"><Player /><h2>お疲れさまでした。</h2><button onClick={() => onAction(tidy ? 'trash' : 'finish')}>終了</button></div>
-    <span className="wastebasket" data-drop="bin" aria-hidden="true"><i /><i /><i /></span>
-    {!tidy && !acted && <Draggable className="paper-scrap" label="床の端の紙くず。ゴミ箱へドラッグできる" onDrop={target => { if (target === 'bin') setTidy(true) }}><i /></Draggable>}
-  </div>
+  return <SceneShell scene="ending" fallback={endingArtwork} className="final-scene" label="仕事の終了画面。部屋の端にはゴミ箱と小さな紙くずがある">
+    <>
+      <DropZone name="bin" box={hit.bin} />
+      <button className="scene-hit finish-hit" style={hitStyle(hit.finish)} aria-label="終了" onClick={() => onAction(tidy ? 'trash' : 'finish')}><span className="fallback-control">終了</span></button>
+      {!tidy && !acted && <Draggable
+        className="paper-hit"
+        style={hitStyle(hit.paper)}
+        label="床の端の紙くず。ゴミ箱へドラッグできる。キーボードでは左矢印でゴミ箱へ入れる"
+        onDrop={target => { if (target === 'bin') setTidy(true) }}
+        onKeyDown={event => { if (event.key === 'ArrowLeft') { event.preventDefault(); setTidy(true) } }}
+      ><span className="fallback-control fallback-paper">◇</span></Draggable>}
+    </>
+  </SceneShell>
 }
 
 export function SceneArtwork(props: Props) {
