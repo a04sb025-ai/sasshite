@@ -368,7 +368,6 @@ function Meeting({ acted, onAction }: Omit<Props, 'sceneId'>) {
 function Ending({ acted, onAction }: Omit<Props, 'sceneId'>) {
   const hit = sceneHitAreas.ending
   const [tidy, setTidy] = useState(false)
-  const [paperMoved, setPaperMoved] = useState(false)
 
   return <SceneShell scene="ending" fallback={endingArtwork} className="final-scene" label="仕事の終了画面。部屋の端にはゴミ箱と小さな紙くずがある">
     <>
@@ -378,13 +377,9 @@ function Ending({ acted, onAction }: Omit<Props, 'sceneId'>) {
         className="paper-object"
         style={hitStyle(hit.paper)}
         label="紙くず。画面内の好きな場所へドラッグできる。ゴミ箱の近くに置くと捨てる。キーボードでは左矢印でゴミ箱へ入れる"
-        onDrop={point => {
-          setPaperMoved(true)
-          if (isEndingBin(point)) setTidy(true)
-        }}
-        onKeyDown={event => { if (event.key === 'ArrowLeft') { event.preventDefault(); setPaperMoved(true); setTidy(true) } }}
+        onDrop={point => { if (isEndingBin(point)) setTidy(true) }}
+        onKeyDown={event => { if (event.key === 'ArrowLeft') { event.preventDefault(); setTidy(true) } }}
       ><PaperSprite /></DraggableObject>}
-      {paperMoved && !tidy && <span className="placement-accepted" aria-live="polite">そこに置いた。</span>}
     </>
   </SceneShell>
 }
