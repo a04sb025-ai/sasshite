@@ -53,6 +53,7 @@ button:focus-visible { outline: 3px solid #b45128; outline-offset: 3px; }
 .character .hair { width: 38px; height: 19px; left: 8px; top: 5px; background: #40372f; border: 2px solid #34342f; border-radius: 70% 55% 30% 20%; z-index: 3; transform: rotate(-5deg); }
 .character .hair::before { content: ""; position: absolute; width: 14px; height: 18px; background: #40372f; right: -7px; top: -8px; border-radius: 100% 0; transform: rotate(27deg); }
 .character .body { width: 42px; height: 42px; left: 6px; top: 40px; background: #cf6b36; border: 2px solid #34342f; border-radius: 45% 48% 12px 12px; z-index: 1; }
+.character .arm { width: 28px; height: 22px; left: 13px; top: 49px; border-bottom: 3px solid #34342f; border-radius: 50%; z-index: 3; }
 .character .legs { left: 16px; top: 79px; width: 26px; height: 13px; border-left: 3px solid #34342f; border-right: 3px solid #34342f; }
 
 .game-screen {
@@ -76,7 +77,7 @@ button:focus-visible { outline: 3px solid #b45128; outline-offset: 3px; }
 
 .art {
   position: relative;
-  width: min(100%, 360px);
+  width: min(100%, 340px);
   aspect-ratio: var(--scene-aspect, 420 / 620);
   align-self: center;
   overflow: hidden;
@@ -97,9 +98,7 @@ button:focus-visible { outline: 3px solid #b45128; outline-offset: 3px; }
 }
 
 .scene-control,
-.object-button,
-.bin-visual,
-.elevator-panel { position: absolute; }
+.object-button { position: absolute; }
 
 .object-button {
   z-index: 14;
@@ -116,109 +115,91 @@ button:focus-visible { outline: 3px solid #b45128; outline-offset: 3px; }
   will-change: transform;
 }
 .object-button:disabled { cursor: default; opacity: 1; }
-.object-button .object-sprite {
+.object-sprite {
   display: block;
   width: 100%;
   height: 100%;
-  overflow: visible;
-  color: #40382f;
-  filter: drop-shadow(0 3px 3px rgba(42,34,28,.24));
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+  filter: drop-shadow(0 5px 8px rgba(30,24,20,.25));
   transform-origin: center;
   transition: transform 120ms ease, filter 120ms ease;
 }
 .object-button.selected .object-sprite {
-  transform: translateY(-4px) scale(1.07) rotate(-1deg);
-  filter: drop-shadow(0 10px 8px rgba(42,34,28,.3)) drop-shadow(0 0 2px rgba(255,252,245,.86));
+  transform: translateY(-4px) scale(1.05);
+  filter: drop-shadow(0 10px 12px rgba(30,24,20,.3));
 }
 .object-button.dragging { z-index: 28; cursor: grabbing; }
 .object-button.dragging .object-sprite {
-  transform: translateY(-9px) scale(1.12) rotate(2deg);
-  filter: drop-shadow(0 14px 10px rgba(42,34,28,.34)) drop-shadow(0 0 3px rgba(255,252,245,.92));
+  transform: translateY(-10px) scale(1.1);
+  filter: drop-shadow(0 18px 18px rgba(30,24,20,.34));
 }
-.object-button:focus-visible { z-index: 32; border-radius: 10px; }
-.bag-object { min-width: 66px; min-height: 50px; }
-.karaage-object { min-width: 54px; min-height: 54px; }
-.paper-object { min-width: 48px; min-height: 48px; }
+.object-button:focus-visible { z-index: 32; border-radius: 12px; }
+.bag-object { min-width: 72px; min-height: 56px; }
+.karaage-object { min-width: 58px; min-height: 48px; }
+.paper-object { min-width: 44px; min-height: 44px; }
 
 .scene-control {
   z-index: 18;
   min-width: 44px;
   min-height: 44px;
-  border: 1px solid rgba(59,57,52,.5);
-  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 999px;
   padding: 0;
   display: grid;
   place-items: center;
-  background: rgba(247,245,239,.88);
-  box-shadow: 0 4px 10px rgba(48,42,35,.18), inset 0 1px rgba(255,255,255,.7);
+  background: rgba(30,26,23,.32);
+  color: #fff;
   font-size: 12px;
   font-weight: 700;
   touch-action: manipulation;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(3px);
+  box-shadow: 0 6px 18px rgba(22,19,17,.2);
 }
+.scene-control span { line-height: 1; letter-spacing: .02em; }
 .scene-control:active,
 .scene-control.selected {
   transform: translateY(1px) scale(.97);
-  box-shadow: 0 2px 5px rgba(48,42,35,.16), inset 0 0 0 2px rgba(180,81,40,.22);
-  background: rgba(250,237,217,.96);
-}
-.stand-control {
-  border-radius: 50%;
-  font-size: 18px;
-  color: #4f504b;
-  background: rgba(248,246,239,.76);
-  border-color: rgba(74,72,67,.35);
+  background: rgba(180,81,40,.62);
 }
 
-.elevator-panel {
-  z-index: 12;
-  left: 77.5%;
-  top: 47.5%;
-  width: 17.5%;
-  height: 25%;
-  border: 1px solid rgba(67,71,69,.72);
-  border-radius: 8px;
-  background: linear-gradient(100deg, rgba(105,110,107,.93), rgba(202,205,200,.96) 46%, rgba(104,109,106,.94));
-  box-shadow: 0 5px 12px rgba(39,35,31,.2), inset 1px 0 rgba(255,255,255,.45);
-  pointer-events: none;
+.stand-control {
+  min-width: 52px;
+  min-height: 52px;
+  background: rgba(255,255,255,.18);
+  border-color: rgba(255,255,255,.45);
+  font-size: 11px;
 }
 .elevator-button {
-  color: #eeeeea;
-  background: radial-gradient(circle at 35% 30%, #656b68, #343a37 68%);
-  border-color: rgba(30,33,31,.8);
-  box-shadow: 0 2px 6px rgba(28,25,22,.28), inset 0 1px 1px rgba(255,255,255,.2);
-}
-.elevator-button:active { background: radial-gradient(circle at 35% 30%, #8d674c, #5e3d2c 70%); }
-
-.meeting-control {
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 50%;
-  font-size: 17px;
-  color: #f5f6f4;
-  background: rgba(65,71,67,.96);
-  border-color: rgba(232,235,232,.2);
-  box-shadow: 0 3px 8px rgba(20,23,21,.28), inset 0 1px rgba(255,255,255,.08);
+  background: rgba(44,44,44,.34);
+  color: rgba(255,255,255,.95);
+  font-size: 10px;
 }
+.meeting-control {
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 999px;
+  background: rgba(20,20,20,.4);
+  font-size: 10px;
+}
+.meeting-control.mic-control { background: transparent; border-color: transparent; box-shadow: none; backdrop-filter: none; }
 .meeting-control:active,
-.meeting-control.selected { background: #96563b; color: #fff; }
-
+.meeting-control.selected { background: rgba(150,86,59,.82); color: #fff; border-color: rgba(255,255,255,.4); }
 .finish-hit {
-  border-radius: 8px;
-  color: #454743;
-  background: rgba(244,241,232,.9);
-  border-color: rgba(113,109,101,.42);
-  box-shadow: inset 0 1px rgba(255,255,255,.9), 0 3px 8px rgba(52,46,40,.1);
+  min-width: 54px;
+  min-height: 54px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.14);
+  border-color: rgba(255,255,255,.4);
+  color: rgba(35,35,35,.85);
+  text-shadow: 0 1px 0 rgba(255,255,255,.35);
+  backdrop-filter: blur(2px);
 }
-
-.bin-visual {
-  z-index: 9;
-  color: #494740;
-  pointer-events: none;
-  display: grid;
-  place-items: center;
-}
-.bin-sprite { width: 100%; height: 100%; filter: drop-shadow(0 4px 4px rgba(40,35,31,.24)); }
-.bin-visual.received { animation: bin-pop 180ms ease-out both; }
-@keyframes bin-pop { 50% { transform: scale(1.08) rotate(-2deg); } }
+.final-scene .finish-hit { background: rgba(255,255,255,.08); }
 
 .reaction {
   width: 100%;
