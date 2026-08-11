@@ -30,16 +30,16 @@ export const sceneHitAreas = {
     bag: { left: 34, top: 55, width: 20, height: 14 },
   },
   elevator: {
-    open: { left: 28.5, top: 35.5, width: 8, height: 7 },
-    close: { left: 28.5, top: 42.5, width: 8, height: 7 },
+    open: { left: 79, top: 55.6, width: 13, height: 9 },
+    close: { left: 79, top: 65.8, width: 13, height: 9 },
   },
   karaage: {
-    food: { left: 40.5, top: 50.5, width: 19, height: 12.5 },
+    food: { left: 40.5, top: 42.5, width: 19, height: 12.5 },
   },
   meeting: {
-    mic: { left: 32, top: 63.3, width: 9, height: 7 },
-    hand: { left: 50, top: 63.3, width: 9, height: 7 },
-    chat: { left: 59, top: 63.3, width: 9, height: 7 },
+    mic: { left: 28.5, top: 61.1, width: 11, height: 8.5 },
+    hand: { left: 45, top: 61.1, width: 11, height: 8.5 },
+    chat: { left: 61.5, top: 61.1, width: 11, height: 8.5 },
   },
   ending: {
     finish: { left: 73, top: 24, width: 16, height: 13 },
@@ -84,7 +84,7 @@ function pointInScene(element: HTMLElement, clientX: number, clientY: number) {
 
 export function classifyTrainDrop(point: Point) {
   if (point.y >= 72) return 'bag-floor'
-  if (point.x <= 52 && point.y >= 57 && point.y < 72) return 'bag-lap'
+  if (point.x <= 34 && point.y >= 54 && point.y < 72) return 'bag-lap'
   return 'bag-other'
 }
 
@@ -221,7 +221,7 @@ function DraggableObject({ className, label, children, onDrop, onKeyDown, style,
 
 function Train({ acted, onAction }: Omit<Props, 'sceneId'>) {
   const hit = sceneHitAreas.train
-  return <SceneShell artwork={trainArtwork} className="train" label="電車内。自分の隣の座席に荷物を置けそうで、前には座りたそうな乗客が立っている">
+  return <SceneShell artwork={trainArtwork} className="train" label="電車内。オレンジ色の服の自分が座り、隣席にはバッグ、前には座りたそうな乗客が立っている">
     <>
       <button type="button" className="scene-control stand-control" style={hitStyle(hit.stand)} aria-label="席を立つ" onClick={() => onAction('stand')}><span aria-hidden="true">立</span></button>
       <DraggableObject
@@ -282,7 +282,7 @@ function Elevator({ onAction }: Omit<Props, 'sceneId'>) {
     held.current = false
   }
 
-  return <SceneShell artwork={elevatorArtwork} className="elevator" label="エレベーターの扉が閉まりかけ、廊下の向こうから人が走ってくる">
+  return <SceneShell artwork={elevatorArtwork} className="elevator" label="自分はエレベーターの中。閉まりかけた扉の向こうから人が走ってきて、右手の操作盤に開く・閉じるボタンがある">
     <>
       <button
         type="button"
@@ -328,14 +328,17 @@ function Meeting({ acted, onAction }: Omit<Props, 'sceneId'>) {
   ] as const
 
   return <SceneShell artwork={meetingArtwork} className="meeting" label="オンライン会議。司会者が意見を求めたあと、4人が黙って待っている">
-    <>{controls.map(([id, label, text, box]) => <button
-      type="button"
-      key={id}
-      className={`scene-control meeting-control ${id}-control ${acted === id ? 'selected' : ''}`}
-      style={hitStyle(box)}
-      aria-label={label}
-      onClick={() => { vibrate(8); onAction(id) }}
-    ><span aria-hidden="true">{text}</span></button>)}</>
+    <>
+      <div className="meeting-controls-plate" aria-hidden="true" />
+      {controls.map(([id, label, text, box]) => <button
+        type="button"
+        key={id}
+        className={`scene-control meeting-control ${id}-control ${acted === id ? 'selected' : ''}`}
+        style={hitStyle(box)}
+        aria-label={label}
+        onClick={() => { vibrate(8); onAction(id) }}
+      ><span aria-hidden="true">{text}</span></button>)}
+    </>
   </SceneShell>
 }
 
