@@ -1,1 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 620" role="img"><defs><filter id="paper"><feTurbulence baseFrequency=".45" numOctaves="3" result="n"/><feBlend in="SourceGraphic" in2="n" mode="soft-light"/></filter><filter id="shadow"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-opacity=".22"/></filter><linearGradient id="skin" x2="0" y2="1"><stop stop-color="#f4d0ad"/><stop offset="1" stop-color="#dca982"/></linearGradient><linearGradient id="orange" x2="0" y2="1"><stop stop-color="#e98948"/><stop offset="1" stop-color="#bd552a"/></linearGradient></defs><rect width="420" height="620" fill="#eee9df"/><rect width="420" height="470" fill="#dedbd3"/><rect y="470" width="420" height="150" fill="#9f9a91"/><path d="M0 470h420" stroke="#66645e" stroke-width="9"/><circle cx="355" cy="74" r="39" fill="#f8f5ed" stroke="#575852" stroke-width="7"/><path d="M355 74V49M355 74l22 13" stroke="#4b4c47" stroke-width="5" stroke-linecap="round"/><rect x="53" y="118" width="314" height="284" rx="13" fill="#faf8f1" stroke="#454640" stroke-width="6" filter="url(#shadow)"/><g transform="translate(181 140)"><ellipse cx="29" cy="35" rx="28" ry="34" fill="url(#skin)" stroke="#34352f" stroke-width="5"/><path d="M1 31Q3-10 55 6l10 27-33-20-27 24z" fill="#3c332e"/><path d="M-3 131q2-64 34-65 33 1 37 65" fill="url(#orange)" stroke="#34352f" stroke-width="6"/></g><text x="119" y="306" font-family="sans-serif" font-size="25" fill="#34352f">お疲れさまでした。</text><rect x="145" y="331" width="130" height="52" rx="5" fill="#eee9de" stroke="#454640" stroke-width="4"/><text x="187" y="365" font-family="sans-serif" font-size="20">終了</text><g transform="translate(29 509)"><path d="M0 0h65l-8 87H10z" fill="#777b76" stroke="#4d504b" stroke-width="5"/><path d="M14 12l7 65M33 12v65M52 12l-7 65" stroke="#b7b8b1" stroke-width="4"/><path d="M-5 0h75" stroke="#454843" stroke-width="8"/></g><rect width="420" height="620" fill="none" stroke="#373832" stroke-width="5"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 620" role="img">
+  <defs>
+    <linearGradient id="wall" x2="0" y2="1"><stop stop-color="#ece9e2"/><stop offset="1" stop-color="#d6d2ca"/></linearGradient>
+    <linearGradient id="floor" x2="0" y2="1"><stop stop-color="#aaa49b"/><stop offset="1" stop-color="#858079"/></linearGradient>
+    <linearGradient id="screen" x2="0" y2="1"><stop stop-color="#fbfbf8"/><stop offset="1" stop-color="#ecebe5"/></linearGradient>
+    <linearGradient id="skin" x2=".2" y2="1"><stop stop-color="#f0c6a2"/><stop offset="1" stop-color="#d59b77"/></linearGradient>
+    <linearGradient id="orange" x2="0" y2="1"><stop stop-color="#dc7940"/><stop offset="1" stop-color="#aa4d29"/></linearGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="7" stdDeviation="7" flood-color="#29231f" flood-opacity=".2"/></filter>
+  </defs>
+  <rect width="420" height="620" fill="url(#wall)"/>
+  <path d="M0 468h420v152H0z" fill="url(#floor)"/>
+  <path d="M0 468h420" stroke="#77736d" stroke-width="4"/>
+  <path d="M0 519h420M0 574h420" stroke="#cac4ba" stroke-width="2" opacity=".35"/>
+  <path d="M116 468 90 620M306 468l28 152" stroke="#6d6963" stroke-width="2" opacity=".25"/>
+
+  <circle cx="351" cy="76" r="41" fill="#f7f4ec" stroke="#77756f" stroke-width="4" filter="url(#soft)"/>
+  <circle cx="351" cy="76" r="3" fill="#4a4a46"/>
+  <path d="M351 76V49M351 76l22 13" stroke="#4d4d49" stroke-width="4" stroke-linecap="round"/>
+  <path d="M351 44v5M386 76h-5M351 108v-5M318 76h5" stroke="#77756f" stroke-width="2"/>
+
+  <rect x="44" y="108" width="332" height="302" rx="17" fill="#464946" filter="url(#soft)"/>
+  <rect x="54" y="118" width="312" height="282" rx="10" fill="url(#screen)"/>
+  <rect x="180" y="410" width="60" height="24" rx="5" fill="#555955"/>
+  <path d="M165 438h90" stroke="#555955" stroke-width="9" stroke-linecap="round"/>
+
+  <g transform="translate(170 137)">
+    <ellipse cx="40" cy="39" rx="27" ry="31" fill="url(#skin)"/>
+    <path d="M14 36c2-25 14-38 34-38 17 0 28 11 31 29-11-6-20-8-28-7-13 2-22 7-37 16z" fill="#342d29"/>
+    <circle cx="35" cy="43" r="2" fill="#39322e"/><circle cx="56" cy="42" r="2" fill="#39322e"/>
+    <path d="M35 56c7 3 13 2 18-1" stroke="#966554" stroke-width="2" fill="none"/>
+    <path d="M9 132c2-56 13-70 33-72 23 1 35 18 38 72z" fill="url(#orange)"/>
+  </g>
+  <text x="210" y="298" text-anchor="middle" font-family="sans-serif" font-size="22" font-weight="600" fill="#3d403d">お疲れさまでした。</text>
+  <text x="210" y="323" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#858983">本日の作業を終了します</text>
+  <rect x="146" y="332" width="128" height="53" rx="8" fill="#f4f1e8" stroke="#c7c4bb" stroke-width="2"/>
+
+  <rect x="33" y="445" width="98" height="14" rx="6" fill="#6a625a" opacity=".55"/>
+  <rect x="294" y="444" width="76" height="13" rx="6" fill="#6a625a" opacity=".38"/>
+  <rect x="2" y="2" width="416" height="616" rx="10" fill="none" stroke="#56524d" stroke-width="4" opacity=".45"/>
+</svg>
