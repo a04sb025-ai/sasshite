@@ -53,15 +53,25 @@ CloudflareのGit連携を使う場合は、ビルドコマンドを `npm run bui
 
 場面を追加するときは、まず `src/data/scenes.ts` にデータを加え、必要な見た目だけを `SceneArtwork.tsx` に追加します。開発方針の詳細は [`AGENTS.md`](./AGENTS.md) を参照してください。
 
+### 場面画像の表示
+
+通常は `public/scene-art/*.png` の生成済み画像を見た目として使います。操作判定は画像に埋め込まず、`SceneArtwork.tsx` のHTMLヒット領域で行います。生成PNGが読み込めない場合だけ `src/assets/scenes/*.svg` へ切り替わります。
+
 ### 場面画像の生成
 
-場面画像は、GitHub Actionsの **Generate scene artwork** を手動実行して生成できます。リポジトリのActions secretに `OPENAI_API_KEY` を登録してから実行すると、共通の主人公リファレンスを作り、その人物を参照して5場面を生成します。画像生成にはAPI利用料金が発生します。
+画像生成はAPI料金とバイナリ差分を伴うため、GitHub Actionsの **Generate scene artwork** を必要なときだけ手動実行します。`push` やデプロイでは自動実行しません。
+
+1. GitHub Actions Secret に `OPENAI_API_KEY` を登録します。
+2. **Generate scene artwork** を `workflow_dispatch` で手動実行します。
+3. 生成結果は `generated-scene-art` artifact としてダウンロードします。
+4. 人間が5枚を確認した後、採用する画像だけを `public/scene-art/` へコピーし、通常の別コミットまたは別PRで反映します。
 
 - ワークフロー: `.github/workflows/generate-scene-art.yml`
 - プロンプト: `prompts/imagegen/`
-- 生成先: `public/scene-art/`
+- artifact生成先: `output/imagegen/scene-art/`
+- アプリで使う採用画像: `public/scene-art/`
 
-画像生成用のワークフロー・プロンプト・CLIを変更したブランチでは一度だけ自動実行され、それ以外は手動実行です。APIキーは画像生成時だけ使用し、Viteの環境変数や公開アプリには渡しません。生成画像はActionsのartifactでも確認でき、成功時は実行したブランチへコミットされます。
+Actionsは `contents: read` のみで、生成画像を実行ブランチへ自動pushしません。`OPENAI_API_KEY` はActions Secretから画像生成CLIへだけ渡し、Vite/Reactのクライアント環境変数にはしません。`VITE_OPENAI_API_KEY` のような公開バンドルへ入るキーは作成しないでください。
 
 ## Ver.0.6の範囲
 
