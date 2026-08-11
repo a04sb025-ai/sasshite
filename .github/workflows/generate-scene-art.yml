@@ -2,14 +2,9 @@ name: Generate scene artwork
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - '.github/workflows/generate-scene-art.yml'
-      - 'prompts/imagegen/**'
-      - 'scripts/imagegen/image_gen.py'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   generate:
@@ -18,8 +13,6 @@ jobs:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -27,7 +20,7 @@ jobs:
         run: python -m pip install --disable-pip-version-check openai pillow
       - name: Generate consistent character reference
         run: |
-          mkdir -p output/imagegen public/scene-art
+          mkdir -p output/imagegen/scene-art
           python scripts/imagegen/image_gen.py generate \
             --prompt-file prompts/imagegen/character.txt \
             --model gpt-image-2 --quality high --size 1024x1536 \
@@ -39,18 +32,11 @@ jobs:
               --image output/imagegen/character-reference.png \
               --prompt-file "prompts/imagegen/${scene}.txt" \
               --model gpt-image-2 --quality high \
-              --out "public/scene-art/${scene}.png"
+              --out "output/imagegen/scene-art/${scene}.png"
           done
-      - name: Upload artwork for review
+      - name: Upload artwork for human review
         uses: actions/upload-artifact@v4
         with:
           name: generated-scene-art
-          path: public/scene-art/*.png
-      - name: Commit generated assets to this branch
-        run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public/scene-art
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Generate realistic scene artwork"
-          git push origin HEAD:${GITHUB_REF_NAME}
+          path: output/imagegen/scene-art/*.png
+          if-no-files-found: error
