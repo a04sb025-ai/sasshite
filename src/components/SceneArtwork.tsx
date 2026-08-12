@@ -17,12 +17,21 @@ import karaageAsset from '../assets/objects/karaage.svg'
 import karaageArtwork from '../assets/scenes/karaage.svg'
 import meetingArtwork from '../assets/scenes/meeting.svg'
 import trainArtwork from '../assets/scenes/train.svg'
+import extra00 from '../assets/scenes/v07/00.txt?raw'
+import extra01 from '../assets/scenes/v07/01.txt?raw'
+import extra02 from '../assets/scenes/v07/02.txt?raw'
+import extra03 from '../assets/scenes/v07/03.txt?raw'
+import extra04 from '../assets/scenes/v07/04.txt?raw'
+import extra05 from '../assets/scenes/v07/05.txt?raw'
+
+const extraScenesArtwork = `data:image/webp;base64,${extra00}${extra01}${extra02}${extra03}${extra04}${extra05}`
 
 type Props = { sceneId: Scene['id']; acted: string | null; onAction: (id: string) => void }
 type HitBox = { left: number; top: number; width: number; height: number }
 type Point = { x: number; y: number }
 type SceneStyle = CSSProperties & { '--scene-aspect'?: string }
 type VibratingNavigator = Navigator & { vibrate?: (pattern: number | number[]) => boolean }
+type ChoiceControl = readonly [id: string, label: string, text: string, box: HitBox]
 
 export const sceneHitAreas = {
   train: {
@@ -40,6 +49,46 @@ export const sceneHitAreas = {
     mic: { left: 28.5, top: 61.1, width: 11, height: 8.5 },
     hand: { left: 45, top: 61.1, width: 11, height: 8.5 },
     chat: { left: 61.5, top: 61.1, width: 11, height: 8.5 },
+  },
+  bus: {
+    stand: { left: 14, top: 56, width: 16, height: 11 },
+    invite: { left: 55, top: 48, width: 16, height: 11 },
+  },
+  cafe: {
+    move: { left: 61, top: 59, width: 16, height: 11 },
+    invite: { left: 48, top: 42, width: 16, height: 11 },
+  },
+  snack: {
+    take: { left: 43, top: 61, width: 15, height: 10 },
+    offer: { left: 60, top: 58, width: 15, height: 10 },
+  },
+  rain: {
+    share: { left: 27, top: 34, width: 16, height: 11 },
+    lend: { left: 48, top: 45, width: 16, height: 11 },
+  },
+  photo: {
+    shutter: { left: 7, top: 45, width: 16, height: 11 },
+    timer: { left: 24, top: 51, width: 16, height: 11 },
+  },
+  printer: {
+    hand: { left: 14, top: 56, width: 16, height: 11 },
+    leave: { left: 30, top: 62, width: 16, height: 11 },
+  },
+  bill: {
+    split: { left: 38, top: 61, width: 15, height: 10 },
+    pay: { left: 55, top: 61, width: 15, height: 10 },
+  },
+  door: {
+    hold: { left: 15, top: 60, width: 16, height: 11 },
+    release: { left: 32, top: 65, width: 16, height: 11 },
+  },
+  checkout: {
+    yield: { left: 55, top: 54, width: 16, height: 11 },
+    proceed: { left: 40, top: 68, width: 16, height: 11 },
+  },
+  pantry: {
+    yield: { left: 22, top: 49, width: 16, height: 11 },
+    continue: { left: 42, top: 54, width: 16, height: 11 },
   },
   ending: {
     finish: { left: 73, top: 24, width: 16, height: 13 },
@@ -100,22 +149,35 @@ function isEndingBin(point: Point) {
   return point.x >= 70 && point.y >= 72
 }
 
-function SceneShell({ artwork, label, className, children }: {
+function SceneShell({ artwork, label, className, children, frame }: {
   artwork: string
   label: string
   className: string
   children: ReactNode
+  frame?: number
 }) {
   const [imageAspect, setImageAspect] = useState<number | null>(null)
-  const shellStyle: SceneStyle = imageAspect ? { '--scene-aspect': String(imageAspect) } : {}
+  const fixedAspect = frame === undefined ? null : 2 / 3
+  const shellStyle: SceneStyle = fixedAspect
+    ? { '--scene-aspect': String(fixedAspect) }
+    : imageAspect
+      ? { '--scene-aspect': String(imageAspect) }
+      : {}
 
   const loaded = (event: SyntheticEvent<HTMLImageElement>) => {
+    if (fixedAspect) return
     const { naturalWidth, naturalHeight } = event.currentTarget
     if (naturalWidth > 0 && naturalHeight > 0) setImageAspect(naturalWidth / naturalHeight)
   }
 
+  const backgroundStyle: CSSProperties | undefined = frame === undefined ? undefined : {
+    height: '1000%',
+    top: `-${frame * 100}%`,
+    objectFit: 'fill',
+  }
+
   return <div className={`art ${className}`} data-art-source="generated" aria-label={label} style={shellStyle}>
-    <img className="scene-background" src={artwork} alt="" onLoad={loaded} />
+    <img className="scene-background" src={artwork} alt="" onLoad={loaded} style={backgroundStyle} />
     {children}
   </div>
 }
@@ -217,6 +279,27 @@ function DraggableObject({ className, label, children, onDrop, onKeyDown, style,
     onKeyDown={onKeyDown}
     style={{ ...style, transform: `translate3d(${offset.x}px, ${offset.y}px, 0)` }}
   >{children}</button>
+}
+
+function ChoiceScene({ frame, className, label, controls, acted, onAction }: {
+  frame: number
+  className: string
+  label: string
+  controls: readonly ChoiceControl[]
+  acted: string | null
+  onAction: (id: string) => void
+}) {
+  return <SceneShell artwork={extraScenesArtwork} frame={frame} className={className} label={label}>
+    <>{controls.map(([id, ariaLabel, text, box]) => <button
+      type="button"
+      key={id}
+      className={`scene-control context-control ${acted === id ? 'selected' : ''}`}
+      style={hitStyle(box)}
+      aria-label={ariaLabel}
+      disabled={Boolean(acted)}
+      onClick={() => { vibrate(8); onAction(id) }}
+    ><span aria-hidden="true">{text}</span></button>)}</>
+  </SceneShell>
 }
 
 function Train({ acted, onAction }: Omit<Props, 'sceneId'>) {
@@ -342,6 +425,96 @@ function Meeting({ acted, onAction }: Omit<Props, 'sceneId'>) {
   </SceneShell>
 }
 
+function Bus(props: Omit<Props, 'sceneId'>) {
+  const hit = sceneHitAreas.bus
+  const controls = [
+    ['stand', '席を立つ', '立', hit.stand],
+    ['invite', '席を指してどうぞと合図する', 'どうぞ', hit.invite],
+  ] as const
+  return <ChoiceScene frame={0} className="bus" label="バス車内。オレンジ色の服の自分が座り、杖を持つ高齢の乗客が近くに立っている" controls={controls} {...props} />
+}
+
+function Cafe(props: Omit<Props, 'sceneId'>) {
+  const hit = sceneHitAreas.cafe
+  const controls = [
+    ['move-bag', '隣の椅子からバッグをどける', '移', hit.move],
+    ['invite', '席を使うよう声をかける', 'どうぞ', hit.invite],
+  ] as const
+  return <ChoiceScene frame={1} className="cafe" label="混んだカフェ。自分の隣の椅子にバッグがあり、席を探す人が近くに立っている" controls={controls} {...props} />
+}
+
+function Snack(props: Omit<Props, 'sceneId'>) {
+  const hit = sceneHitAreas.snack
+  const controls = [
+    ['take', '最後のお菓子を取る', '取', hit.take],
+    ['offer', '最後のお菓子を誰かに勧める', '勧', hit.offer],
+  ] as const
+  return <ChoiceScene frame={2} className="snack" label="休憩室。4人がテーブル中央の最後のお菓子を見つめている" controls={controls} {...props} />
+}
+
+function Rain(props: Omit<Props, 'sceneId'>) {
+  const hit = sceneHitAreas.rain
+  const controls = [
+    ['share', '傘に一緒に入るよう寄る', '入', hit.share],
+    ['lend', '傘を相手に渡す', '渡', hit.lend],
+  ] as const
+  return <ChoiceScene frame={3} className="rain" label="雨の日の軒下。オレンジ色の服の自分だけが傘を持ち、隣の人は傘を持っていない" controls={controls} {...props} />
+}
+
+function Photo(props: Omit<Props, 'sceneId'>) {
+  const hit = sceneHitAreas.photo
+  const controls = [
+    ['shutter', 'そのままシャッターを切る', '撮', hit.shutter],
+    ['timer', 'タイマーを使って撮り直す', '⏱', hit.timer],
+  ] as const
+  return <ChoiceScene frame={4} className="photo" label="観光先。オレンジ色の服の自分がスマートフォンを持ち、仲間と写真を撮ろうとしている" controls={controls} {...props} />
+}
+
+function Printer(props: Omit<Props, 'sceneId'>) {
+  const hit = sceneHitAreas.printer
+  const controls = [
+    ['hand', '印刷物を同僚に渡す', '渡', hit.hand],
+    ['leave', '取り出し口に置いておく', '置', hit.leave],
+  ] as const
+  return <ChoiceScene frame={5} className="printer" label="オフィスの複合機。オレンジ色の服の自分が印刷物を取り、後ろから同僚が近づいている" controls={controls} {...props} />
+}
+
+function Bill(props: Omit<Props, 'sceneId'>) {
+  const hit = sceneHitAreas.bill
+  const controls = [
+    ['split', '割り勘にしようと声をかける', '割', hit.split],
+    ['pay', 'まとめて払うと手を伸ばす', '払', hit.pay],
+  ] as const
+  return <ChoiceScene frame={6} className="bill" label="食事のあと。4人がテーブル中央の会計票を見つめている" controls={controls} {...props} />
+}
+
+function Door(props: Omit<Props, 'sceneId'>) {
+  const hit = sceneHitAreas.door
+  const controls = [
+    ['hold', 'ドアをそのまま押さえて待つ', '待', hit.hold],
+    ['release', '先にドアから手を離す', '離', hit.release],
+  ] as const
+  return <ChoiceScene frame={7} className="door" label="入口のドアを自分が押さえ、荷物を抱えた人が近づいている" controls={controls} {...props} />
+}
+
+function Checkout(props: Omit<Props, 'sceneId'>) {
+  const hit = sceneHitAreas.checkout
+  const controls = [
+    ['yield', '後ろの人に先を譲る', '譲', hit.yield],
+    ['proceed', 'そのまま会計を進める', '先', hit.proceed],
+  ] as const
+  return <ChoiceScene frame={8} className="checkout" label="レジ。買い物かごがいっぱいの自分の後ろに、飲み物ひとつだけの人が並んでいる" controls={controls} {...props} />
+}
+
+function Pantry(props: Omit<Props, 'sceneId'>) {
+  const hit = sceneHitAreas.pantry
+  const controls = [
+    ['yield', 'いったん共用スペースを空ける', '譲', hit.yield],
+    ['continue', '先に自分の用事を済ませる', '続', hit.continue],
+  ] as const
+  return <ChoiceScene frame={9} className="pantry" label="オフィスの給湯スペース。オレンジ色の服の自分が共用スペースを使い、マグを持った同僚が待っている" controls={controls} {...props} />
+}
+
 function Ending({ acted, onAction }: Omit<Props, 'sceneId'>) {
   const hit = sceneHitAreas.ending
   const [tidy, setTidy] = useState(false)
@@ -361,9 +534,22 @@ function Ending({ acted, onAction }: Omit<Props, 'sceneId'>) {
 }
 
 export function SceneArtwork(props: Props) {
-  if (props.sceneId === 'train') return <Train {...props} />
-  if (props.sceneId === 'elevator') return <Elevator {...props} />
-  if (props.sceneId === 'karaage') return <Karaage {...props} />
-  if (props.sceneId === 'meeting') return <Meeting {...props} />
+  switch (props.sceneId) {
+    case 'train': return <Train {...props} />
+    case 'elevator': return <Elevator {...props} />
+    case 'karaage': return <Karaage {...props} />
+    case 'meeting': return <Meeting {...props} />
+    case 'bus': return <Bus {...props} />
+    case 'cafe': return <Cafe {...props} />
+    case 'snack': return <Snack {...props} />
+    case 'rain': return <Rain {...props} />
+    case 'photo': return <Photo {...props} />
+    case 'printer': return <Printer {...props} />
+    case 'bill': return <Bill {...props} />
+    case 'door': return <Door {...props} />
+    case 'checkout': return <Checkout {...props} />
+    case 'pantry': return <Pantry {...props} />
+    case 'ending': return <Ending {...props} />
+  }
   return <Ending {...props} />
 }
