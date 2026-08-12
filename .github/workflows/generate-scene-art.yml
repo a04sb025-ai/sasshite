@@ -2,6 +2,13 @@ name: Generate scene artwork
 
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Artwork to generate
+        required: true
+        type: choice
+        options:
+          - train-redesign-candidate
 
 permissions:
   contents: read
@@ -9,8 +16,6 @@ permissions:
 jobs:
   generate:
     runs-on: ubuntu-latest
-    env:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -18,25 +23,20 @@ jobs:
           python-version: '3.12'
       - name: Install image-generation dependencies
         run: python -m pip install --disable-pip-version-check openai pillow
-      - name: Generate consistent character reference
+      - name: Generate one train redesign candidate
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           mkdir -p output/imagegen/scene-art
-          python scripts/imagegen/image_gen.py generate \
-            --prompt-file prompts/imagegen/character.txt \
+          cat prompts/imagegen/character.txt prompts/imagegen/train.txt > "$RUNNER_TEMP/train-prompt.txt"
+          env -u OPENAI_BASE_URL python scripts/imagegen/image_gen.py generate \
+            --prompt-file "$RUNNER_TEMP/train-prompt.txt" \
             --model gpt-image-2 --quality high --size 1024x1536 \
-            --out output/imagegen/character-reference.png
-      - name: Generate scenes from the character reference
-        run: |
-          for scene in train elevator karaage meeting ending; do
-            python scripts/imagegen/image_gen.py edit \
-              --image output/imagegen/character-reference.png \
-              --prompt-file "prompts/imagegen/${scene}.txt" \
-              --model gpt-image-2 --quality high \
-              --out "output/imagegen/scene-art/${scene}.png"
-          done
+            --n 1 \
+            --out output/imagegen/scene-art/train-redesign-candidate.png
       - name: Upload artwork for human review
         uses: actions/upload-artifact@v4
         with:
-          name: generated-scene-art
-          path: output/imagegen/scene-art/*.png
+          name: train-redesign-candidate
+          path: output/imagegen/scene-art/train-redesign-candidate.png
           if-no-files-found: error
