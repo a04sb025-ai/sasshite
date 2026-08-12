@@ -22,7 +22,7 @@ export default function App() {
 
   if (screen === 'title') return <main className="title-screen">
     <div className="title-character"><Player /></div>
-    <div><p className="version">Ver. 0.7</p><h1>察して。</h1><p className="tagline">空気を読んでください。</p><p className="player-note">このオレンジの人が、あなたです。</p><button className="text-button" onClick={start}>はじめる</button></div>
+    <div><p className="version">Ver. 0.8</p><h1>察して。</h1><p className="tagline">空気を読んでください。</p><p className="player-note">このオレンジの人が、あなたです。</p><button className="text-button" onClick={start}>はじめる</button></div>
   </main>
   if (screen === 'game') return <GameScene key={scenes[index].id} scene={scenes[index]} number={index + 1} total={scenes.length} onComplete={complete} />
 
