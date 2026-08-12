@@ -10,6 +10,7 @@ on:
         options:
           - train-redesign-candidate
           - train-layer-assets
+          - train-layer-assets-v2
           - commit-train-redesign
 
 jobs:
@@ -137,6 +138,86 @@ jobs:
         with:
           name: train-layer-assets
           path: output/imagegen/train-layers/final/*.png
+          if-no-files-found: error
+
+  generate-train-layer-assets-v2:
+    if: ${{ inputs.mode == 'train-layer-assets-v2' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install image-generation dependencies
+        run: python -m pip install --disable-pip-version-check openai pillow
+      - name: Generate master-aligned train plates
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p output/imagegen/train-layers-v2/intermediate output/imagegen/train-layers-v2/final
+
+          env -u OPENAI_BASE_URL python scripts/imagegen/image_gen.py edit \
+            --image public/scene-art/train.png \
+            --prompt-file prompts/imagegen/train-layer-v2-background.txt \
+            --model gpt-image-2 --quality high --size 1024x1536 \
+            --n 1 --output-format png \
+            --out output/imagegen/train-layers-v2/intermediate/train-background.png
+
+          env -u OPENAI_BASE_URL python scripts/imagegen/image_gen.py edit \
+            --image output/imagegen/train-layers-v2/intermediate/train-background.png \
+            --image public/scene-art/train.png \
+            --prompt-file prompts/imagegen/train-layer-v2-npc-seated-composite.txt \
+            --model gpt-image-2 --quality high --size 1024x1536 \
+            --n 1 --output-format png \
+            --out output/imagegen/train-layers-v2/intermediate/train-npc-seated-composite.png
+
+          python scripts/image-processing/build_train_layers_v2.py \
+            --master public/scene-art/train.png \
+            --background output/imagegen/train-layers-v2/intermediate/train-background.png \
+            --seated-composite output/imagegen/train-layers-v2/intermediate/train-npc-seated-composite.png \
+            --out-dir output/imagegen/train-layers-v2/final
+
+      - name: Validate master-canvas outputs
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+
+          root = Path('output/imagegen/train-layers-v2/final')
+          expected = [
+              'train-background.png',
+              'train-player-seated.png',
+              'train-npc-standing.png',
+              'train-npc-seated.png',
+              'train-bag.png',
+              'train-preview-before.png',
+              'train-preview-after-seated.png',
+              'train-preview-after-lap.png',
+              'train-preview-after-floor.png',
+              'train-preview-diff.png',
+          ]
+          for name in expected:
+              path = root / name
+              if not path.is_file():
+                  raise SystemExit(f'Missing generated asset: {path}')
+              with Image.open(path) as image:
+                  print(f'{name}: mode={image.mode}, size={image.size}')
+                  if image.size != (1024, 1536):
+                      raise SystemExit(f'{name} lost master-canvas alignment')
+          for name in ['train-player-seated.png', 'train-npc-standing.png', 'train-npc-seated.png', 'train-bag.png']:
+              with Image.open(root / name) as image:
+                  if image.convert('RGBA').getchannel('A').getbbox() is None:
+                      raise SystemExit(f'{name} has no visible sprite pixels')
+          PY
+
+      - name: Upload aligned train layers and previews for human review
+        uses: actions/upload-artifact@v4
+        with:
+          name: train-layer-assets-v2
+          path: output/imagegen/train-layers-v2/final/*.png
           if-no-files-found: error
 
   commit-train-redesign:
