@@ -9,12 +9,13 @@ on:
         type: choice
         options:
           - train-redesign-candidate
-
-permissions:
-  contents: read
+          - commit-train-redesign
 
 jobs:
-  generate:
+  generate-candidate:
+    if: ${{ inputs.mode == 'train-redesign-candidate' }}
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,3 +41,49 @@ jobs:
           name: train-redesign-candidate
           path: output/imagegen/scene-art/train-redesign-candidate.png
           if-no-files-found: error
+
+  commit-train-redesign:
+    if: ${{ inputs.mode == 'commit-train-redesign' }}
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install image-generation dependencies
+        run: python -m pip install --disable-pip-version-check openai pillow
+      - name: Generate one train redesign candidate
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          mkdir -p output/imagegen/scene-art
+          cat prompts/imagegen/character.txt prompts/imagegen/train.txt > "$RUNNER_TEMP/train-prompt.txt"
+          env -u OPENAI_BASE_URL python scripts/imagegen/image_gen.py generate \
+            --prompt-file "$RUNNER_TEMP/train-prompt.txt" \
+            --model gpt-image-2 --quality high --size 1024x1536 \
+            --n 1 \
+            --out output/imagegen/scene-art/train-redesign-candidate.png
+      - name: Commit redesigned train artwork to dedicated branch
+        run: |
+          cp output/imagegen/scene-art/train-redesign-candidate.png public/scene-art/train.png
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C train-redesign-image
+          git add public/scene-art/train.png
+          staged="$(git diff --cached --name-only)"
+          if [ "$staged" != "public/scene-art/train.png" ]; then
+            echo "Unexpected staged files; refusing to push."
+            exit 1
+          fi
+          if git diff --cached --quiet; then
+            echo "Generated artwork is unchanged; nothing to commit."
+            exit 0
+          fi
+          git commit -m "Update train stage artwork"
+          git push --force-with-lease origin HEAD:train-redesign-image
