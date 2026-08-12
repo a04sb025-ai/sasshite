@@ -22,14 +22,14 @@ export default function App() {
 
   if (screen === 'title') return <main className="title-screen">
     <div className="title-character"><Player /></div>
-    <div><p className="version">Ver. 0.6</p><h1>察して。</h1><p className="tagline">空気を読んでください。</p><p className="player-note">このオレンジの人が、あなたです。</p><button className="text-button" onClick={start}>はじめる</button></div>
+    <div><p className="version">Ver. 0.7</p><h1>察して。</h1><p className="tagline">空気を読んでください。</p><p className="player-note">このオレンジの人が、あなたです。</p><button className="text-button" onClick={start}>はじめる</button></div>
   </main>
   if (screen === 'game') return <GameScene key={scenes[index].id} scene={scenes[index]} number={index + 1} total={scenes.length} onComplete={complete} />
 
   const result = diagnose(scores)
   return <main className="result-screen">
     <p>あなたの察し方は</p><h1>「{result.title}」</h1><p className="comment">{result.comment}</p>
-    <section className="history" aria-labelledby="history-title"><h2 id="history-title">あのとき、あなたは</h2><ol>{records.map(record => <li key={record.scene}><span>{record.scene}</span><p>{record.action}</p></li>)}</ol></section>
+    <section className="history" aria-labelledby="history-title"><h2 id="history-title">あのとき、あなたは</h2><ol>{records.map((record, recordIndex) => <li key={`${recordIndex}-${record.scene}`}><span>{record.scene}</span><p>{record.action}</p></li>)}</ol></section>
     <button className="text-button" onClick={start}>もう一度</button>
   </main>
 }
