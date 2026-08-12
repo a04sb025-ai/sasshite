@@ -2,10 +2,14 @@ import type { Action, Scores } from '../types'
 
 export const initialScores: Scores = { awareness: 40, kindness: 40, assertiveness: 40, nerve: 40, hesitation: 0 }
 
+const ACTION_SCALE = 0.4
+
 export function applyAction(scores: Scores, action: Action): Scores {
-  return Object.fromEntries(Object.entries(scores).map(([key, value]) => [
-    key, Math.max(0, Math.min(100, value + (action.scores[key as keyof Scores] ?? 0))),
-  ])) as Scores
+  return Object.fromEntries(Object.entries(scores).map(([key, value]) => {
+    const rawDelta = action.scores[key as keyof Scores] ?? 0
+    const delta = Math.round(rawDelta * ACTION_SCALE)
+    return [key, Math.max(0, Math.min(100, value + delta))]
+  })) as Scores
 }
 
 export function diagnose(scores: Scores) {
