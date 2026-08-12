@@ -1,0 +1,7 @@
+Use the provided current train-stage image as the exact visual reference for the STANDING NPC only.
+
+Extract/recreate that same passenger as a single isolated transparent PNG asset. Preserve the same rounded face, dark-brown hair, beige overshirt/jacket, cream shirt, dark trousers, brown shoes, dark shoulder bag, compact proportions, calm slightly hopeful expression, and simple rounded 2D mobile-game style.
+
+Show the complete standing figure with the full silhouette visible from head to shoes. Preserve the shoulder-bag placement and restrained posture from the reference.
+
+Transparent background only. No train interior, no seat, no player, no brown seat bag, no text, no captions, no watermark, no opaque background patch, no glow or rectangle. Do not redesign the passenger.
