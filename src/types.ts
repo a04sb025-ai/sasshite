@@ -8,8 +8,25 @@ export type Action = {
   scores: Partial<Scores>
 }
 
+export type SceneId =
+  | 'train'
+  | 'elevator'
+  | 'karaage'
+  | 'meeting'
+  | 'bus'
+  | 'cafe'
+  | 'snack'
+  | 'rain'
+  | 'photo'
+  | 'printer'
+  | 'bill'
+  | 'door'
+  | 'checkout'
+  | 'pantry'
+  | 'ending'
+
 export type Scene = {
-  id: 'train' | 'elevator' | 'karaage' | 'meeting' | 'ending'
+  id: SceneId
   eyebrow: string
   timeoutMs: number
   actions: Action[]
