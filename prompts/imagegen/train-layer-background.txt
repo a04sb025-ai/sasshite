@@ -1,0 +1,9 @@
+Use the provided current train-stage image only as a visual reference for composition, palette, linework, seat geometry, window, door, straps, rails, and floor.
+
+Create the same train interior as a clean BACKGROUND PLATE with no people and no bags anywhere in the scene.
+
+Reconstruct the bench so all seats are empty and continuous. Reconstruct any wall, door, floor, rail, or seat areas that were previously hidden behind the player, standing passenger, or bag. Preserve the simple rounded 2D mobile-game style, warm cream interior, blue bench, restrained outlines, minimal shading, and uncluttered Japanese commuter-train landmarks.
+
+Keep the camera and perspective as close as possible to the reference: vertical 1024x1536, straight-on to slightly elevated, with the left bench, center seat, right-side doorway, straps, window, and open floor all clearly visible.
+
+No people, no bags, no text, no captions, no UI, no watermark, no extra objects, no photorealism, no painterly texture, no dramatic lighting.
