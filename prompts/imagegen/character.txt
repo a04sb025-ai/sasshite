@@ -1,8 +1,32 @@
-Use case: illustration-story
-Asset type: character reference for a Japanese mobile web game
-Primary request: Create a full-body character reference of one memorable young Japanese adult who represents the player. They wear a warm burnt-orange casual jacket over a cream shirt, dark navy trousers, and simple white sneakers. Their short dark-brown hair has one distinctive loose upward forelock. Show front, three-quarter, and side views with consistent face, hair, clothing, body proportions, and colors.
-Style/medium: polished hand-painted editorial illustration with believable anatomy, natural fabric folds, lightly textured gouache and colored-pencil edges; more realistic than a flat vector cartoon, but warm and approachable rather than photographic
-Composition/framing: clean character sheet, full body visible, generous separation between views
-Lighting/mood: soft natural daylight, gentle and observant
-Color palette: muted cream, charcoal, sage, warm burnt orange
-Constraints: Japanese adult; exactly the same character in every view; no labels; no logos; no watermark; no text; no chibi proportions; no glossy 3D rendering; no anime exaggeration
+Use case: mobile social-situation game character reference
+Asset type: original player character reference
+
+PRIMARY REQUEST
+Create one original young Japanese adult player character for a mobile game. The character must feel warm, simple, rounded, readable at small smartphone sizes, and easy to reproduce consistently across many scenes.
+
+CHARACTER DESIGN
+- 3.5 to 4 heads tall.
+- Large rounded head, compact torso, short sturdy limbs, soft silhouette.
+- Very simple face: two small dark eyes and one tiny mouth; no detailed nose, eyelashes, wrinkles, or realistic skin rendering.
+- Short dark-brown hair with one small loose upward forelock as a consistent identifying feature.
+- Warm burnt-orange casual jacket over a cream shirt, dark navy trousers, simple white shoes.
+- Hands and feet are simplified rounded shapes, not anatomically detailed.
+- Neutral, slightly observant default expression.
+- Friendly and lightly comic, but not baby-like and not chibi.
+
+STYLE
+- Clean original 2D game illustration.
+- Rounded shapes, clear silhouettes, restrained linework.
+- Flat-to-soft color fills with very light shading only.
+- Minimal texture; no painterly gouache, watercolor, pencil grain, or realistic fabric rendering.
+- Bright, calm, approachable visual language suitable for a family-friendly puzzle game.
+- Not photorealistic, not 3D, not anime-styled, not an imitation of any existing game character.
+
+REFERENCE SHEET
+Show front, three-quarter, and side views of exactly the same character. Keep face, forelock, outfit, proportions, colors, and body shape consistent. Full body visible in every view with generous separation.
+
+PALETTE
+Warm burnt orange, cream, dark navy, dark brown, soft neutral skin tone. Keep the palette limited and stable.
+
+DO NOT
+No text, labels, logos, watermark, props, background scene, dramatic lighting, realistic anatomy, long limbs, detailed fingers, fashion-detail overload, glossy 3D rendering, painterly editorial style, or resemblance to a specific existing character.
