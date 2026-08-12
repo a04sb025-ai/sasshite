@@ -48,8 +48,8 @@ def diff_alpha(foreground: Image.Image, background: Image.Image, roi_name: str) 
     # untouched. Background generation noise outside the expected object ROI is
     # discarded entirely.
     diff = ImageChops.difference(foreground.convert("RGB"), background.convert("RGB"))
-    channels = diff.split()
-    gray = Image.max(Image.max(channels[0], channels[1]), channels[2])
+    red, green, blue = diff.split()
+    gray = ImageChops.lighter(ImageChops.lighter(red, green), blue)
 
     # Suppress small edit noise, then soften the silhouette edge.
     gray = gray.point(lambda value: 0 if value < 24 else min(255, round((value - 24) * 2.7)))
@@ -86,7 +86,14 @@ def shift_layer(layer: Image.Image, target_center: Tuple[float, float]) -> Image
     target = (target_center[0] * CANVAS[0], target_center[1] * CANVAS[1])
     dx = round(target[0] - source_center[0])
     dy = round(target[1] - source_center[1])
-    return ImageChops.offset(layer, dx, dy)
+
+    # Paste only the visible sprite bounding box onto a fresh master canvas so
+    # translated pixels never wrap around the opposite edge.
+    crop = layer.crop(bbox)
+    destination = (left + dx, top + dy)
+    shifted = Image.new("RGBA", CANVAS, (0, 0, 0, 0))
+    shifted.alpha_composite(crop, dest=destination)
+    return shifted
 
 
 def save_png(image: Image.Image, path: Path) -> None:
@@ -135,7 +142,7 @@ def main() -> int:
     stats = ImageStat.Stat(raw_diff)
     mean = sum(stats.mean) / len(stats.mean)
     print(f"Before preview mean absolute channel difference: {mean:.2f}")
-    amplified = raw_diff.point(lambda v: min(255, v * 4))
+    amplified = raw_diff.point(lambda value: min(255, value * 4))
     diff_preview = ImageOps.autocontrast(amplified)
     save_png(diff_preview.convert("RGBA"), out / "train-preview-diff.png")
 
