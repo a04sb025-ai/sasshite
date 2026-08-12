@@ -91,13 +91,21 @@ function releaseCapture(element: HTMLButtonElement, pointerId: number) {
   }
 }
 
-function Draggable({ className, label, children, onDrop, onReturn, onKeyDown, style }: {
+function dropTargetAt(x: number, y: number) {
+  return document.elementsFromPoint(x, y)
+    .map(element => element.closest<HTMLElement>('[data-drop]'))
+    .find(Boolean)?.dataset.drop ?? null
+}
+
+function Draggable({ className, label, children, onDrop, onReturn, onKeyDown, onDragStateChange, onNearDropChange, style }: {
   className: string
   label: string
   children?: ReactNode
   onDrop: (target: string) => void
   onReturn?: () => void
   onKeyDown?: (event: KeyboardEvent<HTMLButtonElement>) => void
+  onDragStateChange?: (dragging: boolean) => void
+  onNearDropChange?: (target: string | null) => void
   style: CSSProperties
 }) {
   const origin = useRef({ x: 0, y: 0 })
@@ -112,6 +120,8 @@ function Draggable({ className, label, children, onDrop, onReturn, onKeyDown, st
     draggingRef.current = false
     setDragging(false)
     setOffset({ x: 0, y: 0 })
+    onDragStateChange?.(false)
+    onNearDropChange?.(null)
   }
 
   const down = (event: PointerEvent<HTMLButtonElement>) => {
@@ -121,19 +131,19 @@ function Draggable({ className, label, children, onDrop, onReturn, onKeyDown, st
     pointerId.current = event.pointerId
     draggingRef.current = true
     setDragging(true)
+    onDragStateChange?.(true)
     try { event.currentTarget.setPointerCapture(event.pointerId) } catch { /* non-fatal */ }
   }
 
   const move = (event: PointerEvent<HTMLButtonElement>) => {
     if (!draggingRef.current || pointerId.current !== event.pointerId) return
     setOffset({ x: event.clientX - origin.current.x, y: event.clientY - origin.current.y })
+    onNearDropChange?.(dropTargetAt(event.clientX, event.clientY))
   }
 
   const up = (event: PointerEvent<HTMLButtonElement>) => {
     if (!draggingRef.current || pointerId.current !== event.pointerId) return
-    const target = document.elementsFromPoint(event.clientX, event.clientY)
-      .map(element => element.closest<HTMLElement>('[data-drop]'))
-      .find(Boolean)?.dataset.drop
+    const target = dropTargetAt(event.clientX, event.clientY)
     reset(event.currentTarget, event.pointerId)
     if (target) onDrop(target)
     else onReturn?.()
@@ -157,27 +167,40 @@ function Draggable({ className, label, children, onDrop, onReturn, onKeyDown, st
   >{children}</button>
 }
 
-function DropZone({ name, box }: { name: string; box: HitBox }) {
-  return <span className="drop-zone" data-drop={name} style={hitStyle(box)} aria-hidden="true" />
+function DropZone({ name, box, className = '' }: { name: string; box: HitBox; className?: string }) {
+  return <span className={`drop-zone ${className}`} data-drop={name} style={hitStyle(box)} aria-hidden="true" />
 }
 
 function Train({ acted, onAction }: Omit<Props, 'sceneId'>) {
   const hit = sceneHitAreas.train
-  return <SceneShell scene="train" fallback={trainArtwork} className="train" label="電車内。自分の隣の座席をバッグが占め、その前に座りたそうな乗客が立っている">
+  const [draggingBag, setDraggingBag] = useState(false)
+  const [nearDrop, setNearDrop] = useState<string | null>(null)
+  const successfulMove = acted === 'bag-lap' || acted === 'bag-floor'
+
+  return <SceneShell scene="train" fallback={trainArtwork} className={`train ${draggingBag ? 'is-dragging-bag' : ''}`} label="電車内。自分の隣の座席をバッグが占め、その前に座りたそうな乗客が立っている">
     <>
-      <DropZone name="lap" box={hit.lap} />
-      <DropZone name="floor" box={hit.floor} />
+      <DropZone name="lap" box={hit.lap} className={`train-drop-zone ${nearDrop === 'lap' ? 'near-drop' : ''}`} />
+      <DropZone name="floor" box={hit.floor} className={`train-drop-zone ${nearDrop === 'floor' ? 'near-drop' : ''}`} />
       <button className="scene-hit player-hit" style={hitStyle(hit.player)} aria-label="座っている自分。押すと立つ" onClick={() => onAction('stand')} />
+
+      {(draggingBag || successfulMove) && <span className="train-bag-origin-patch" aria-hidden="true" />}
+      {successfulMove && <span className="train-standing-npc-patch" aria-hidden="true" />}
+      {successfulMove && <span className="train-seated-npc" aria-hidden="true"><i className="npc-head" /><i className="npc-body" /><i className="npc-legs" /></span>}
+      {successfulMove && <span className={`train-after-bag ${acted === 'bag-lap' ? 'on-lap' : 'on-floor'}`} aria-hidden="true" />}
+
       {!acted && <Draggable
         className="bag-hit"
         style={hitStyle(hit.bag)}
         label="隣の座席のバッグ。膝か床へドラッグできる。キーボードでは左矢印で膝、下矢印で床"
         onDrop={target => { if (target === 'lap') onAction('bag-lap'); else if (target === 'floor') onAction('bag-floor') }}
+        onReturn={() => { setNearDrop(null) }}
+        onDragStateChange={setDraggingBag}
+        onNearDropChange={setNearDrop}
         onKeyDown={event => {
           if (event.key === 'ArrowLeft') { event.preventDefault(); onAction('bag-lap') }
           if (event.key === 'ArrowDown') { event.preventDefault(); onAction('bag-floor') }
         }}
-      ><span className="fallback-control">バッグ</span></Draggable>}
+      ><span className="train-bag-visual" aria-hidden="true" /><span className="fallback-control">バッグ</span></Draggable>}
     </>
   </SceneShell>
 }

@@ -21,7 +21,7 @@ export function GameScene({ scene, number, total, onComplete }: Props) {
     return () => window.clearTimeout(timer)
   }, [finish, scene.timeoutMs])
 
-  return <main className="game-screen">
+  return <main className={`game-screen ${scene.id === 'train' ? 'train-game-screen' : ''}`}>
     <header className="scene-header"><span>{String(number).padStart(2, '0')} / {String(total).padStart(2, '0')}</span><p>{scene.eyebrow}</p></header>
     <SceneArtwork sceneId={scene.id} acted={acted?.id ?? null} onAction={finish} />
     <div className="reaction" aria-live="polite">{acted?.reaction ?? <span aria-hidden="true">&nbsp;</span>}</div>
