@@ -1,0 +1,7 @@
+Use the provided current train-stage image as the exact visual reference for the PLAYER only.
+
+Extract/recreate the same seated orange-jacket player as a single isolated transparent PNG asset. Preserve the same face, small upward forelock, burnt-orange jacket, cream shirt, dark navy trousers, white shoes, rounded proportions, simple two-eye face, neutral observant expression, seated pose, and simplified 2D mobile-game style.
+
+Show the complete seated character with the full silhouette visible, including shoes and hands. Keep the pose natural for sitting on the train bench and keep the lap clearly readable because the bag may later be placed there.
+
+Transparent background only. No train interior, no seat, no bag, no NPC, no props, no text, no captions, no watermark, no shadow rectangle, no halo, no opaque background patch. Do not redesign the character.

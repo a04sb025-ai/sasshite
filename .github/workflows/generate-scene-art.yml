@@ -9,6 +9,7 @@ on:
         type: choice
         options:
           - train-redesign-candidate
+          - train-layer-assets
           - commit-train-redesign
 
 jobs:
@@ -40,6 +41,102 @@ jobs:
         with:
           name: train-redesign-candidate
           path: output/imagegen/scene-art/train-redesign-candidate.png
+          if-no-files-found: error
+
+  generate-train-layer-assets:
+    if: ${{ inputs.mode == 'train-layer-assets' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install image-generation dependencies
+        run: python -m pip install --disable-pip-version-check openai pillow
+      - name: Generate layered train assets from the approved composite
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p output/imagegen/train-layers/raw output/imagegen/train-layers/final
+
+          # 1) Background plate: preserve the approved train composition while removing people and bags.
+          env -u OPENAI_BASE_URL python scripts/imagegen/image_gen.py edit \
+            --image public/scene-art/train.png \
+            --prompt-file prompts/imagegen/train-layer-background.txt \
+            --model gpt-image-2 --quality high --size 1024x1536 \
+            --n 1 --output-format png \
+            --out output/imagegen/train-layers/final/train-background.png
+
+          # 2-5) Transparent gameplay sprites. gpt-image-1.5 is used because this repo's
+          # image CLI intentionally routes transparent output through that model.
+          for asset in player-seated npc-standing npc-seated bag; do
+            env -u OPENAI_BASE_URL python scripts/imagegen/image_gen.py edit \
+              --image public/scene-art/train.png \
+              --prompt-file "prompts/imagegen/train-layer-${asset}.txt" \
+              --model gpt-image-1.5 --quality high --size 1024x1536 \
+              --background transparent --output-format png --input-fidelity high \
+              --n 1 \
+              --out "output/imagegen/train-layers/raw/train-${asset}.png"
+          done
+
+          # Trim transparent margins so React can position and drag the sprites directly.
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+
+          raw_dir = Path('output/imagegen/train-layers/raw')
+          out_dir = Path('output/imagegen/train-layers/final')
+          out_dir.mkdir(parents=True, exist_ok=True)
+
+          names = ['player-seated', 'npc-standing', 'npc-seated', 'bag']
+          for name in names:
+              src = raw_dir / f'train-{name}.png'
+              dst = out_dir / f'train-{name}.png'
+              with Image.open(src).convert('RGBA') as image:
+                  alpha = image.getchannel('A')
+                  bbox = alpha.getbbox()
+                  if bbox is None:
+                      raise SystemExit(f'No visible pixels in {src}')
+                  left, top, right, bottom = bbox
+                  pad = max(8, round(max(right-left, bottom-top) * 0.04))
+                  left = max(0, left-pad)
+                  top = max(0, top-pad)
+                  right = min(image.width, right+pad)
+                  bottom = min(image.height, bottom+pad)
+                  cropped = image.crop((left, top, right, bottom))
+                  cropped.save(dst, 'PNG')
+                  print(f'{dst}: {cropped.width}x{cropped.height}')
+          PY
+
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+
+          expected = [
+              'train-background.png',
+              'train-player-seated.png',
+              'train-npc-standing.png',
+              'train-npc-seated.png',
+              'train-bag.png',
+          ]
+          root = Path('output/imagegen/train-layers/final')
+          for name in expected:
+              path = root / name
+              if not path.is_file():
+                  raise SystemExit(f'Missing generated asset: {path}')
+              with Image.open(path) as image:
+                  print(f'{name}: mode={image.mode}, size={image.size}')
+                  if name != 'train-background.png' and image.mode != 'RGBA':
+                      raise SystemExit(f'{name} is not RGBA')
+          PY
+      - name: Upload train layer assets for human review
+        uses: actions/upload-artifact@v4
+        with:
+          name: train-layer-assets
+          path: output/imagegen/train-layers/final/*.png
           if-no-files-found: error
 
   commit-train-redesign:
