@@ -1,0 +1,7 @@
+Use the provided current train-stage image as the identity and style reference for the standing NPC.
+
+Create the SAME passenger as a single isolated transparent PNG asset, now seated naturally on the train bench. Preserve the same rounded face, dark-brown hair, beige overshirt/jacket, cream shirt, dark trousers, brown shoes, dark shoulder bag, compact proportions, simple two-eye face, and calm restrained expression.
+
+The seated pose should read instantly at smartphone size: hips on a bench, torso upright but relaxed, feet down, knees forward, shoulder bag kept close to the body. The expression and posture may soften slightly to show relief after a seat became available, but do not exaggerate emotion.
+
+Transparent background only. No train interior, no seat, no player, no brown seat bag, no text, no captions, no watermark, no opaque patch, no glow or rectangle. Match the visual style and character identity of the reference; do not redesign the passenger.
