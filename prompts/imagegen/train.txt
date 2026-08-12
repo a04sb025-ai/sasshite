@@ -1,1 +1,30 @@
-Create a vertical mobile-game scene inside a contemporary Japanese commuter train. Preserve the orange-jacket player from the reference image exactly: same face, forelock, outfit and proportions. The player sits naturally on a bench at lower left. Their medium brown shoulder bag visibly occupies the empty seat immediately beside them. A tired passenger stands directly in front of that bag, glancing at the occupied seat with a restrained hopeful expression. Show train windows, hanging straps, seat upholstery, metal rails and believable depth. The situation must be understood instantly without instructional text. Polished hand-painted editorial illustration, realistic anatomy and perspective, lightly textured gouache edges, warm muted colors, not photorealistic, not flat vector, not anime, no captions, no watermark. Leave the bag clearly separated and unobstructed for an interactive overlay.
+STYLE
+Create an original 2D mobile-game illustration with simple rounded shapes, clear silhouettes, limited colors, minimal texture, and very light shading. The scene should feel warm, playful, calm, and instantly readable on a smartphone. Avoid realistic anatomy, painterly editorial illustration, detailed anime rendering, and glossy 3D. Do not imitate any existing game or character design.
+
+CAMERA
+Vertical 1024x1536 composition. Straight-on to slightly elevated eye-level view of a Japanese commuter-train bench area. Keep the important gameplay objects inside the central safe area so mild object-fit: cover cropping does not remove them. Avoid dramatic perspective and deep background detail.
+
+CHARACTERS
+Exactly two visible people.
+1. PLAYER: the same original player character defined by the character reference; 3.5-4 heads tall, rounded body, simple face, burnt-orange jacket, cream shirt, dark navy trousers. Seated in the lower-left area. The player's full seated torso, lap, and legs must be easy to distinguish.
+2. NPC: one rounded, simplified passenger standing near the adjacent seat, slightly right of center. Use quieter neutral colors than the player. Their posture should subtly suggest they would like to sit, without exaggerated emotion.
+
+SCENE
+Make the location unmistakably a contemporary Japanese commuter train using only a few strong landmarks: one bench seat, one door or window section, several hanging straps, a simple rail, and a clear floor boundary. Keep the rest of the carriage visually sparse. No advertisements, decorative text, crowds, complex reflections, or tiny background details.
+
+GAMEPLAY OBJECTS
+A medium brown shoulder bag occupies the seat immediately beside the player. The bag is the main interactive object. Its entire silhouette must be visible and visually separated from the player, NPC, seat seams, rails, and background. Leave generous clear space around it.
+
+The composition should approximately align with the existing interaction regions:
+- player: left 9-38%, top 49-83%
+- bag: left 39-65%, top 57-76%
+- lap destination: left 18-43%, top 63-81%
+- floor destination: left 10-88%, top 81-97%
+
+The bag should sit mainly within the bag region. The player's lap must remain clearly visible as a plausible drop destination. Leave an open, uncluttered floor area below the seats as another plausible drop destination.
+
+COMPOSITION
+The viewer should understand within one second: a seated player has put a bag on the neighboring seat, while another passenger is standing nearby and could sit there. Make the social situation readable from body placement and spacing rather than text. The player, bag, NPC, lap, and open floor space must not overlap confusingly. Use strong foreground separation and keep the background subordinate.
+
+DO NOT
+No text, captions, labels, logos, watermark, UI buttons, arrows, tutorial markers, speech bubbles, extra passengers, extra bags, realistic anatomy, realistic fabric folds, painterly gouache, watercolor texture, photographic lighting, cinematic depth of field, glossy 3D, anime exaggeration, detailed fingers, distorted limbs, cluttered train interior, hidden bag, bag fused with a person, or an abstract environment that does not immediately read as a train.
