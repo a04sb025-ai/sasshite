@@ -1,0 +1,7 @@
+The FIRST supplied image is the fixed clean train background and is the master geometry. The SECOND supplied image is the original approved train scene and is only a character identity/reference source for the standing passenger.
+
+Edit the FIRST image into a full-scene composite in which the same passenger from the SECOND image is now naturally seated on the empty seat beside the player position. Keep the passenger recognizably the same: same hair, face simplification, body proportions, clothing colors, overall scale, and visual style.
+
+The train background must remain unchanged outside the passenger area. Do not move, redraw, recolor, or reinterpret the bench, window, door, straps, rails, floor, crop, perspective, camera, or lighting. Match the seat perspective exactly so the passenger's hips contact the seat, back aligns naturally with the backrest, and feet meet the floor plane.
+
+Do not include the player. Do not include the brown bag. Do not add text, UI, extra passengers, or new objects. Output a complete 1024x1536 scene, not a cutout; a later script will extract the seated passenger by comparing this result with the fixed background.
