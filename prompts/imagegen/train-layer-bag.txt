@@ -1,0 +1,7 @@
+Use the provided current train-stage image as the exact visual reference for the BROWN SEAT BAG only.
+
+Extract/recreate the same medium-brown shoulder bag as a single isolated transparent PNG asset. Preserve the rounded rectangular body, flap, small buckle, short top handle, side strap, warm brown palette, restrained outline, minimal shading, and simple 2D mobile-game style.
+
+Show the entire bag and strap clearly with generous transparent margin. Keep it readable at small smartphone size and suitable for direct drag interaction.
+
+Transparent background only. No train interior, no seat, no player, no NPC, no text, no captions, no watermark, no opaque patch, no glow, no rectangle, no extra objects. Do not redesign the bag.
