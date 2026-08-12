@@ -1,0 +1,7 @@
+Use the provided current train-stage image as the single master canvas. Preserve its camera, perspective, seat geometry, floor boundary, window, door, straps, rails, palette, linework, lighting, and all train-interior details as closely as possible.
+
+Create a CLEAN BACKGROUND PLATE of exactly the same scene with only these elements removed: the seated player, the standing passenger, and the brown shoulder bag. Reconstruct only the train surfaces that were hidden behind those three foreground elements.
+
+Do not redesign the carriage. Do not move the bench, door, window, straps, rails, floor boundary, or camera. Do not change the crop, zoom, perspective, or color treatment. The result must remain a vertical 1024x1536 master canvas intended to be compared pixel-for-pixel with the supplied reference.
+
+No people, no bags, no text, no UI, no extra objects, no new decoration. Keep all seats empty and visually continuous.
