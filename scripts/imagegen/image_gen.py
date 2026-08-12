@@ -402,6 +402,16 @@ def _create_client():
     return OpenAI()
 
 
+def _image_api_call(call: Any) -> Any:
+    """Run an Image API call without exposing response details or credentials."""
+    try:
+        return call()
+    except Exception as exc:
+        status = getattr(exc, "status_code", None)
+        status_label = str(status) if status is not None else "unavailable"
+        _die(f"Image API request failed (HTTP {status_label}; {exc.__class__.__name__}).")
+
+
 def _create_async_client():
     try:
         from openai import AsyncOpenAI
@@ -749,7 +759,7 @@ def _generate(args: argparse.Namespace) -> None:
     )
     started = time.time()
     client = _create_client()
-    result = client.images.generate(**payload)
+    result = _image_api_call(lambda: client.images.generate(**payload))
     elapsed = time.time() - started
     print(f"Generation completed in {elapsed:.1f}s.", file=sys.stderr)
 
@@ -828,7 +838,7 @@ def _edit(args: argparse.Namespace) -> None:
         request["image"] = image_files if len(image_files) > 1 else image_files[0]
         if mask_file is not None:
             request["mask"] = mask_file
-        result = client.images.edit(**request)
+        result = _image_api_call(lambda: client.images.edit(**request))
 
     elapsed = time.time() - started
     print(f"Edit completed in {elapsed:.1f}s.", file=sys.stderr)
