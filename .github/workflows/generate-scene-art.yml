@@ -10,6 +10,8 @@ on:
         options:
           - train-redesign-candidate
           - train-layer-assets
+          - train-layer-assets-v2
+          - train-layer-assets-v3
           - commit-train-redesign
 
 jobs:
@@ -137,6 +139,117 @@ jobs:
         with:
           name: train-layer-assets
           path: output/imagegen/train-layers/final/*.png
+          if-no-files-found: error
+
+  generate-train-layer-assets-v2:
+    if: ${{ inputs.mode == 'train-layer-assets-v2' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install image-generation dependencies
+        run: python -m pip install --disable-pip-version-check openai pillow
+      - name: Build master-aligned train layer assets
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set -euo pipefail
+          raw=output/imagegen/train-layers-v2/raw
+          final=output/imagegen/train-layers-v2/final
+          mkdir -p "$raw" "$final"
+
+          # The approved image is the only composition master. Generate one locked clean
+          # plate; unchanged master pixels are subsequently used for the three existing assets.
+          env -u OPENAI_BASE_URL python scripts/imagegen/image_gen.py edit \
+            --image public/scene-art/train.png \
+            --prompt-file prompts/imagegen/train-layer-v2-background.txt \
+            --model gpt-image-2 --quality high --size 1024x1536 \
+            --n 1 --output-format png --out "$raw/train-background.png"
+
+          # Generate the required new pose as a full scene first. Supplying both the fixed
+          # plate and master keeps identity, scale, perspective, and seat contact anchored.
+          env -u OPENAI_BASE_URL python scripts/imagegen/image_gen.py edit \
+            --image "$raw/train-background.png" \
+            --image public/scene-art/train.png \
+            --prompt-file prompts/imagegen/train-layer-v2-npc-seated-composite.txt \
+            --model gpt-image-2 --quality high --size 1024x1536 \
+            --n 1 --output-format png --out "$raw/train-npc-seated-composite.png"
+
+          # Difference extraction preserves master pixels for player/standing NPC/bag.
+          # Outputs retain the complete master canvas; there is deliberately no trimming.
+          python scripts/image-processing/build_train_layers_v2.py \
+            --master public/scene-art/train.png \
+            --background "$raw/train-background.png" \
+            --seated-composite "$raw/train-npc-seated-composite.png" \
+            --out-dir "$final"
+      - name: Upload master-aligned assets and previews
+        uses: actions/upload-artifact@v4
+        with:
+          name: train-layer-assets-v2
+          path: output/imagegen/train-layers-v2/final/*.png
+          if-no-files-found: error
+
+  generate-train-layer-assets-v3:
+    if: ${{ inputs.mode == 'train-layer-assets-v3' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install image dependencies
+        run: python -m pip install --disable-pip-version-check openai pillow
+      - name: Generate explicit-mask train layers
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set -euo pipefail
+          raw=output/imagegen/train-layers-v3/raw
+          final=output/imagegen/train-layers-v3/final
+          mkdir -p "$raw" "$final"
+
+          # Call 1/5: only the background is an opaque edit.
+          env -u OPENAI_BASE_URL python scripts/imagegen/image_gen.py edit \
+            --image public/scene-art/train.png \
+            --prompt-file prompts/imagegen/train-layer-v3-background.txt \
+            --model gpt-image-2 --quality high --size 1024x1536 \
+            --output-format png --n 1 --out "$raw/train-background-v3.png"
+
+          # Calls 2-4/5: request semantic isolation alpha directly. The postprocessor uses
+          # this explicit alpha as a binary subject mask; it never derives alpha from RGB diffs.
+          for asset in player-seated npc-standing bag; do
+            env -u OPENAI_BASE_URL python scripts/imagegen/image_gen.py edit \
+              --image public/scene-art/train.png \
+              --prompt-file "prompts/imagegen/train-layer-v3-${asset}.txt" \
+              --model gpt-image-1.5 --quality high --size 1024x1536 \
+              --background transparent --output-format png --input-fidelity high \
+              --n 1 --out "$raw/train-${asset}-v3-raw.png"
+          done
+
+          # Call 5/5: explicit transparent isolation for the only newly posed subject.
+          env -u OPENAI_BASE_URL python scripts/imagegen/image_gen.py edit \
+            --image "$raw/train-background-v3.png" \
+            --image public/scene-art/train.png \
+            --prompt-file prompts/imagegen/train-layer-v3-npc-seated.txt \
+            --model gpt-image-1.5 --quality high --size 1024x1536 \
+            --background transparent --output-format png --input-fidelity high \
+            --n 1 --out "$raw/train-npc-seated-v3-raw.png"
+
+          python scripts/image-processing/build_train_layers_v3.py \
+            --master public/scene-art/train.png \
+            --background "$raw/train-background-v3.png" \
+            --raw-dir "$raw" --out-dir "$final"
+      - name: Upload v3 assets, masks, and previews
+        uses: actions/upload-artifact@v4
+        with:
+          name: train-layer-assets-v3
+          path: output/imagegen/train-layers-v3/final/*.png
           if-no-files-found: error
 
   commit-train-redesign:

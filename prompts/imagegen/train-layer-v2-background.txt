@@ -1,0 +1,5 @@
+EDIT the supplied master train image in place. Treat it as a locked 1024x1536 master canvas, not inspiration.
+
+Remove only the seated player, standing passenger (including their shoulder bag), and brown bag on the seat. Inpaint the small occluded portions of bench, wall, door, and floor. Every already-visible background pixel and every structural edge must remain in its original coordinate. Preserve exactly the camera, perspective, crop, seat geometry, floor line, windows, straps, rails, palette, lighting, and linework.
+
+Return a full opaque 1024x1536 background plate. Do not redesign, reframe, rescale, shift, relight, or add anything. No people and no bags.
