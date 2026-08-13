@@ -1,0 +1,1 @@
+Edit the supplied 1024x1536 master in place. Remove only both people and both bags, inpainting the occluded train interior. Lock the canvas, camera, perspective, crop, seat, window, door, straps, floor, palette, lighting, and every already-visible background edge. Return a full opaque background. Do not reframe, redesign, shift, or add objects.
