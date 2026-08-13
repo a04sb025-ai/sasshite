@@ -1,0 +1,23 @@
+:root { font-family: Inter, "Hiragino Sans", "Yu Gothic", sans-serif; color: #f5efe2; background: #1d2d2e; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; min-height: 100vh; background: radial-gradient(circle at 50% 12%, #405858 0, #263b3c 38%, #172526 100%); }
+button { font: inherit; }
+.prototype-shell { width: min(100%, 540px); margin: 0 auto; padding: 24px 16px 32px; }
+.prototype-header { display: grid; gap: 3px; margin: 0 4px 15px; }
+.prototype-header h1 { margin: 0; font-family: "Yu Mincho", "Hiragino Mincho ProN", serif; font-size: clamp(1.85rem, 8vw, 2.7rem); font-weight: 700; letter-spacing: .12em; }
+.prototype-header p { margin: 0; color: #c6d0ca; font-size: .82rem; }
+.prototype-header .prototype-kicker { color: #dfa06b; font-size: .68rem; font-weight: 800; letter-spacing: .18em; }
+.scene-card { position: relative; overflow: hidden; border: 1px solid rgb(242 225 196 / 24%); border-radius: 26px; background: #d9dbd2; box-shadow: 0 24px 70px rgb(4 15 16 / 42%), inset 0 1px rgb(255 255 255 / 32%); }
+.train-scene { display: block; width: 100%; height: auto; aspect-ratio: 2 / 3; }
+.scene-caption { position: absolute; inset: auto 14px 14px; display: flex; justify-content: center; pointer-events: none; }
+.scene-caption span { padding: 8px 15px; border: 1px solid rgb(255 255 255 / 24%); border-radius: 999px; color: #fffaf0; background: rgb(31 47 46 / 78%); box-shadow: 0 6px 20px rgb(20 31 30 / 22%); font-size: .73rem; letter-spacing: .04em; backdrop-filter: blur(8px); }
+.state-switcher { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+.state-switcher button { min-height: 64px; padding: 9px 7px; border: 1px solid rgb(236 221 194 / 20%); border-radius: 14px; color: #d7ddd8; background: rgb(22 36 37 / 74%); cursor: pointer; transition: transform 160ms ease, border-color 160ms ease, background 160ms ease; }
+.state-switcher button:hover { border-color: rgb(229 164 106 / 60%); transform: translateY(-2px); }
+.state-switcher button:focus-visible { outline: 3px solid #f6bd7c; outline-offset: 3px; }
+.state-switcher button.is-active { border-color: #d98952; color: #fff8e9; background: #8c4e37; box-shadow: 0 8px 24px rgb(11 22 22 / 28%); }
+.state-switcher strong, .state-switcher span { display: block; }
+.state-switcher strong { font-size: clamp(.62rem, 2.7vw, .76rem); letter-spacing: .04em; }
+.state-switcher span { margin-top: 4px; font-size: clamp(.52rem, 2.25vw, .65rem); line-height: 1.25; opacity: .75; }
+@media (min-width: 480px) { .prototype-shell { padding-top: 34px; } .state-switcher { gap: 10px; } .state-switcher button { min-height: 72px; } }
+@media (prefers-reduced-motion: reduce) { .state-switcher button { transition: none; } }
