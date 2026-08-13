@@ -27,6 +27,8 @@
 
 ### Rive最小実験: Player 1体
 
+詳細タスク: [`docs/tasks/rive-player-minimal-experiment.md`](./tasks/rive-player-minimal-experiment.md)
+
 目的:
 Riveを本格導入する前に、「本番に使いたい品質のPlayer 1体を作り、同一キャラクターのまま自然に立つ / 座るを表現できるか」を最小コストで検証する。
 
