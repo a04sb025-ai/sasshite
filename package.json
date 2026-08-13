@@ -10,6 +10,18 @@
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run"
   },
-  "dependencies": {"@vitejs/plugin-react":"latest","vite":"latest","typescript":"latest","react":"latest","react-dom":"latest"},
-  "devDependencies": {"@types/react":"latest","@types/react-dom":"latest","vitest":"latest","wrangler":"latest"}
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "pixi.js": "^8.19.0",
+    "react": "latest",
+    "react-dom": "latest",
+    "typescript": "latest",
+    "vite": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "vitest": "latest",
+    "wrangler": "latest"
+  }
 }
