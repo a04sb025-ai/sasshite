@@ -205,6 +205,8 @@ jobs:
           python-version: '3.12'
       - name: Install image dependencies
         run: python -m pip install --disable-pip-version-check openai pillow
+      - name: Test common layer extraction and quality gates (no API)
+        run: python -m unittest discover -s scripts/image-processing/tests -v
       - name: Generate explicit-mask train layers
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -221,8 +223,8 @@ jobs:
             --model gpt-image-2 --quality high --size 1024x1536 \
             --output-format png --n 1 --out "$raw/train-background-v3.png"
 
-          # Calls 2-4/5: request semantic isolation alpha directly. The postprocessor uses
-          # this explicit alpha as a binary subject mask; it never derives alpha from RGB diffs.
+          # Calls 2-4/5: request transparent isolation RGBA. Both API RGB and API alpha
+          # are retained; the completed master is reference-only and is never pasted through a mask.
           for asset in player-seated npc-standing bag; do
             env -u OPENAI_BASE_URL python scripts/imagegen/image_gen.py edit \
               --image public/scene-art/train.png \
@@ -249,7 +251,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: train-layer-assets-v3
-          path: output/imagegen/train-layers-v3/final/*.png
+          path: |
+            output/imagegen/train-layers-v3/final/*.png
+            output/imagegen/train-layers-v3/final/quality-report.json
           if-no-files-found: error
 
   commit-train-redesign:
