@@ -1,70 +1,111 @@
 # Current Plan
 
-最終更新: 2026-08-13
+最終更新: 2026-08-14
 
 この文書は、察して。の「いま何をしているか」「次に何をするか」の正本です。ChatGPT / Codexは、新しい作業を始める前に必ず確認してください。
 
 ## 現在地
 
-Androidスマホだけで継続できるアート / 描画方式の次の技術検証として、電車ステージの **PixiJS Prototype v1** を専用ページ `/prototypes/train-pixi-v1` に実装しました。本番ゲームの画面、進行、採点、問題データには接続していません。
+Androidスマホ上で **PixiJS Prototype v1** を実機確認し、次を確認できました。
 
-Prototype v1で確認できるもの:
+- `1024 × 1536` の共通論理座標をAndroid画面へ縮小表示できる。
+- バッグを独立オブジェクトとして指でドラッグできる。
+- 指追従とドロップ判定が成立する。
+- 正解ドロップからBefore→After状態へ遷移できる。
+- PixiJS Runtime自体は今回の電車ステージ用途で実用候補になる。
 
-- PixiJS内部は `1024 × 1536` の共通座標で固定し、表示だけを端末幅へ縮小する。
-- 既存の電車PNGを薄い参考背景として再利用し、バッグ、ドロップ先、Afterの乗客はPixiJSの仮図形として独立させる。
-- バッグをドラッグし、指定位置へドロップするとBeforeからAfterへ切り替わる。
-- Before / Afterボタンとリセットボタンでも状態を確認でき、状態説明をテキストでも通知する。
-- PixiJSは専用URLを開いたときだけ遅延ロードし、本番ゲームの初期バンドルから分離する。
-- Image API、外部有料素材、PC専用Editorは使用していない。
+一方、Afterの乗客をPixiJSの丸・矩形等の仮図形で描く方式は、人体・アート品質が本番水準に届かないため不採用とします。
 
-これはゲーム構造とAndroid幅でのRuntime表示を0円で判断するための仮素材です。人物のアート品質を合格とするものではありません。
+今後は **「アートを作る工程」と「ゲームとして動かす工程」を分離**します。
+
+- 高品質なBefore / After完成絵は画像アセットとして用意する。
+- 操作対象のバッグは独立透過Spriteとして用意する。
+- PixiJSは描画エンジン・共通座標・ドラッグ・判定・遷移・演出だけを担当する。
+- PixiJSで人物の顔・身体・服を図形描画しない。
+
+詳細な次タスクは [`docs/tasks/train-layered-art-pixi-v1.md`](./tasks/train-layered-art-pixi-v1.md) を正本とします。
 
 ## 決定済みの原則
 
 - GitHubを唯一の正本にし、PR → CI → Preview → Android確認 → mergeの順を守る。
 - PC専用GUIを本番制作パイプラインの必須工程にしない。
-- 1枚絵を後からゲーム用パーツへ無理に分解しない。
-- 背景、キャラクター、操作物は最初から独立して動かせる構造にする。
-- アート品質とゲーム構造を別々に判定し、仮素材の構造テストだけで本番採用しない。
-- Image APIの反復実行を前提にしない。
+- Androidスマホをユーザーの指示・確認・承認端末とし、重い開発作業はクラウドへ寄せる。
+- 1枚絵を後から人物・小物へ無理に分解する方式は採用しない。
+- アート品質とゲーム構造を別々に判定する。
+- PixiJSはゲーム操作・座標・描画・遷移を担当し、人物アートをコード図形で生成しない。
+- BeforeとAfterを別々の自由生成で作らない。Beforeを基準にAfterをeditベースで作る。
+- 操作対象は最初から独立アセットとして設計する。
+- Image APIを反復試行の主工程にしない。
 - Prototypeの合格前に本番ゲーム、採点、他ステージへ組み込まない。
 
 ## 次のタスク
 
-### PixiJS Prototype v1のAndroid Preview判定
+### Layered Art + PixiJS Prototype v1
 
-PRのCloudflare PreviewをAndroidで開き、`/prototypes/train-pixi-v1` を確認します。
+Codexは最初に以下を読んでください。
 
-確認項目:
+- `AGENTS.md`
+- `README.md`
+- `docs/current-plan.md`
+- `docs/android-only-development-architecture.md`
+- `docs/tasks/train-layered-art-pixi-v1.md`
+- 現在の `/prototypes/train-pixi-v1` 関連実装
 
-- 320〜480px程度の縦長画面で、キャンバス全体が横にはみ出さず表示される。
-- バッグが指の移動へ追従し、ページスクロールと競合しない。
-- 指をドロップ先で離すとAfterへ切り替わり、外で離すと元へ戻る。
-- Before / After / やり直すの各ボタンが44px以上で押せる。
-- 既存PNGを背景参照にしつつ、操作物を独立オブジェクトとして扱う方式に位置ズレや違和感がないか判断できる。
-- Android端末で描画速度、初期表示時間、メモリ使用に明らかな問題がない。
+今回の実装目的は、**本番アートをまだ生成せずに**、次の最終構造をPixiJS Prototypeへ組み込むことです。
 
-判定後の分岐:
+- Beforeを1枚のbackground Spriteとして扱う。
+- Afterを1枚のbackground Spriteとして扱う。
+- Bagだけを独立Spriteとして扱う。
+- 主要座標・アセット・drop zoneをscene configへまとめる。
+- 正解時は短いsettle後、Before→Afterをcrossfadeする。
+- resetでBeforeへ戻る。
+- 人物をPixiJS Graphicsで描画しない。
+- 1024×1536を唯一の論理座標とする。
+- Android Previewで操作する。
 
-- **構造・操作がOK**: 別PRでアート制作方法とレイヤー仕様を定義する。まだ本番統合はしない。
-- **操作がNG**: 指追従、ドロップ領域、表示倍率だけをPrototypeで修正する。
-- **Runtime負荷がNG**: Canvas 2D / SVG方式と同条件で比較し、PixiJS採用を保留する。
-- **仮素材では判断不能**: 無料かつAndroid-only運用可能な素材作成経路を先に検証する。
+この段階では既存画像または無料の仮素材を使い、**Image APIは0回**とします。
+
+### 合格条件
+
+- AndroidでBefore背景 + 独立Bagが自然に表示される。
+- Bagを指でドラッグできる。
+- 正解ドロップでAfter背景へ自然に切り替わる。
+- Before / After切替時にCanvasサイズ・座標・表示倍率が変わらない。
+- resetが機能する。
+- scene configに主要座標が集約される。
+- Player / NPCをPixiJS図形で描かない。
+- 本番ゲームへ接続しない。
+- Image API 0回。
+
+### 合格後の次段階
+
+このPrototype構造がAndroidで合格したあとに限り、**Before基準アート1枚**の制作へ進みます。
+
+Before画像が目視で本番候補として合格するまで、After画像やBag画像を大量生成しません。
+
+Before合格後:
+
+1. Beforeを参照してAfterをeditベースで生成する。
+2. 同じデザインのBag透過素材を生成する。
+3. PixiJS Prototypeへ差し替える。
+4. AndroidでBefore→drag→Afterを目視確認する。
+5. 合格後に初めて本番統合を検討する。
 
 ## このタスクではまだやらないこと
 
 - PixiJS Prototypeの本番ゲームへの統合
-- 本番用キャラクター / 背景アートの採用
+- 本番用アートのImage API生成
 - 採点、問題データ、他ステージの変更
-- Rive Editorを必須にする制作工程
-- Image APIの呼び出し
+- Rive / Spine / Live2DなどPC専用Editorを前提にする工程
 - mainへの自動マージ
 
 ## 完了したこと
 
-- Rive Player最小実験の契約と品質ゲートを文書化した。ただしPC専用Editorを必須にしない方針へ移行したため、Rive制作は現在の次タスクではない。
+- Rive Player最小実験の契約と品質ゲートを文書化したが、PC専用Editorを標準工程にしない方針へ移行した。
 - Androidスマホだけで開発を継続する正式アーキテクチャを [`docs/android-only-development-architecture.md`](./android-only-development-architecture.md) に定義した。
-- PixiJS Prototype v1で、共通座標、バッグドラッグ、Before / After、レスポンシブ表示を本番から分離して実装した。
+- PixiJS Prototype v1を実装し、Androidで共通座標、バッグドラッグ、ドロップ判定、Before→After状態遷移が成立することを確認した。
+- PixiJSのコード図形による人物アートは品質不足と判断し、本番候補から外した。
+- 高品質完成絵 + 独立操作Sprite + PixiJSというレイヤード方式を次の本命として定義した。
 
 ## 完了時の更新ルール
 
