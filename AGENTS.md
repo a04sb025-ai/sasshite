@@ -2,6 +2,24 @@
 
 このリポジトリは、初心者がAIと相談しながら小さく継続開発できることを最優先にします。
 
+## 作業開始時の必須確認
+
+GitHubをプロジェクト状態の唯一の正本として扱います。
+
+ChatGPT / Codexは新しい作業を始める前に、必ず次を確認してください。
+
+1. `AGENTS.md`
+2. `README.md`
+3. `docs/current-plan.md`
+4. current-planから参照されている関連設計文書
+5. GitHub上の最新main・関連PR・実差分
+
+会話履歴やCodexのローカルGit状態だけを根拠に、現在仕様やmainとの差分を決めないでください。
+
+実装担当は作業完了時に、長く有効な進捗・判断・次タスクを `docs/current-plan.md` または関連文書へ反映してください。ユーザーがChatGPTとCodexの間で長いログを手作業で中継することを前提にしないでください。
+
+詳細な役割分担とPR運用は [`docs/development-workflow.md`](./docs/development-workflow.md) を参照してください。Riveを扱う場合は [`docs/rive-guidelines.md`](./docs/rive-guidelines.md) も確認してください。
+
 ## 基本方針
 
 - React、Vite、TypeScriptによる静的なSPAを維持する。
