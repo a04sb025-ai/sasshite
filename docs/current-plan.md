@@ -17,6 +17,7 @@ Layered Art + PixiJS Prototype v1を実装し、ローカルのtypecheck・test�
 - 本番ゲーム、採点、問題データへは接続していない。
 - Image APIは呼び出していない。
 - Android縦画面向けに表示枠を4:5にし、PixiJSの`sceneRoot`全体のboundsから単一のscale + translateを計算するcamera fitを実装した。Player、NPC、Bag、座席、dropZoneを同じ構図内に収め、`?debug=1`ではscene boundsとviewport枠を表示・ログ出力できる。
+- バッグのpointer座標を、バッグとdropZoneが所属する`sceneRoot`のlocal座標へ統一した。pointerdown時の掴み位置offsetを保持するため、camera scale、CSS縮小、DPRに依存せずバッグが指へ追従する。
 
 次の判定はAndroid Preview上で、表示の自然さ、指追従、背景切替時のサイズ・座標・倍率不変、resetを確認することです。
 

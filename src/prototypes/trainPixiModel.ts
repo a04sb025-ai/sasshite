@@ -5,6 +5,25 @@ export type TrainPrototypeState = 'before' | 'settling' | 'after'
 export const BAG_START = trainPixiScene.bag.startPosition
 export const BAG_TARGET = trainPixiScene.dropZones[0]
 
+export interface Point {
+  x: number
+  y: number
+}
+
+export function grabOffset(pointerPosition: Point, bagPosition: Point): Point {
+  return {
+    x: pointerPosition.x - bagPosition.x,
+    y: pointerPosition.y - bagPosition.y,
+  }
+}
+
+export function draggedBagPosition(pointerPosition: Point, offset: Point): Point {
+  return {
+    x: pointerPosition.x - offset.x,
+    y: pointerPosition.y - offset.y,
+  }
+}
+
 export function stagePoint(
   clientX: number,
   clientY: number,

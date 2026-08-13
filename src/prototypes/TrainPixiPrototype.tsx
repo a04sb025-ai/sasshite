@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Application, Assets, Container, Graphics, Sprite } from 'pixi.js'
 import { fitSceneToViewport } from './fitSceneToViewport'
-import { isBagInTarget, stagePoint, TRAIN_STAGE, type TrainPrototypeState } from './trainPixiModel'
+import { draggedBagPosition, grabOffset, isBagInTarget, type Point, type TrainPrototypeState } from './trainPixiModel'
 import { trainPixiScene } from './trainPixiScene'
 
 export default function TrainPixiPrototype() {
@@ -109,6 +109,7 @@ export default function TrainPixiPrototype() {
       fitScene()
 
       let dragging = false
+      let pointerGrabOffset: Point = { x: 0, y: 0 }
       let interactionEnabled = true
       const cancelTransition = () => {
         window.clearTimeout(settleTimer)
@@ -137,8 +138,10 @@ export default function TrainPixiPrototype() {
         animationFrame = requestAnimationFrame(draw)
       }
 
-      bag.on('pointerdown', () => {
+      bag.on('pointerdown', event => {
         if (!interactionEnabled) return
+        const pointer = event.getLocalPosition(sceneRoot)
+        pointerGrabOffset = grabOffset(pointer, bag.position)
         dragging = true
         bag.cursor = 'grabbing'
       })
@@ -146,8 +149,9 @@ export default function TrainPixiPrototype() {
       app.stage.hitArea = app.screen
       app.stage.on('pointermove', event => {
         if (!dragging) return
-        const point = event.getLocalPosition(app.stage)
-        bag.position.set(point.x, point.y)
+        const pointer = event.getLocalPosition(sceneRoot)
+        const position = draggedBagPosition(pointer, pointerGrabOffset)
+        bag.position.set(position.x, position.y)
       })
       const finishDrag = () => {
         if (!dragging) return
@@ -198,13 +202,7 @@ export default function TrainPixiPrototype() {
       <h1>電車ステージ技術検証</h1>
       <p>隣の席にあるバッグを床へ移動してください。</p>
     </header>
-    <div
-      ref={hostRef}
-      className="train-pixi-host"
-      onPointerDown={event => {
-        if (hostRef.current) stagePoint(event.clientX, event.clientY, hostRef.current.getBoundingClientRect())
-      }}
-    />
+    <div ref={hostRef} className="train-pixi-host" />
     <p className="train-prototype-status" aria-live="polite">
       {state === 'before' && 'Before：バッグが隣の席にあります。'}
       {state === 'settling' && 'バッグを移動しました…'}
