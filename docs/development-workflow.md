@@ -1,6 +1,8 @@
 # AI支援開発フロー
 
-この文書は、察して。の開発で ChatGPT / GitHub / Codex / React / Rive の役割を分離し、ユーザーが会話内容や実装結果を手作業で中継する回数を減らすための運用ルールです。
+この文書は、察して。の開発で ChatGPT / GitHub / Codex / React / Cloudflare の役割を分離し、ユーザーが会話内容や実装結果を手作業で中継する回数を減らすための運用ルールです。
+
+Androidスマホだけで継続開発するための正式アーキテクチャは [`docs/android-only-development-architecture.md`](./android-only-development-architecture.md) を参照してください。
 
 ## 原則
 
@@ -14,10 +16,11 @@ GitHub を唯一の正本（source of truth）とします。
 - ChatGPT: 企画、UX、設計、優先順位、PR・差分のレビュー、次タスクの決定
 - GitHub: コード、仕様、進捗、PR、CI結果、判断履歴の正本
 - Codex: GitHub上の仕様を読み、実装、テスト、コミット、PR更新を行う実装担当
-- React: ゲーム進行、入力、採点、Rive Runtimeとの接続
-- Rive: キャラクターアート、リグ、ポーズ、アニメーション、状態遷移
+- React: ゲーム進行、入力、採点、描画・アニメーションRuntimeとの接続
 - GitHub Actions: typecheck、test、build、必要な生成・品質検査
-- Cloudflare Preview: スマートフォンでの最終目視確認
+- Cloudflare Preview: Androidスマートフォンでの最終目視確認
+
+PC専用GUIを必須にするアート制作ツールは標準フローに含めません。RiveなどはRuntime候補として利用できても、Androidだけで制作工程を完結できない場合は必須依存にしません。
 
 ## 標準フロー
 
@@ -30,7 +33,7 @@ GitHub を唯一の正本（source of truth）とします。
 7. 実装後、Codex は `docs/current-plan.md` の進捗を更新する。大きな仕様判断を会話だけに残さない。
 8. GitHub PRを作成し、GitHub Actions と Cloudflare Preview を通す。
 9. ChatGPT は GitHub上のPR、変更ファイル、CI結果を直接確認する。ユーザーにCodexログのコピペを要求することを標準フローにしない。
-10. ユーザーは原則としてPreviewを見て「OK / NG / 気になる点」を返す。
+10. ユーザーはAndroidのCloudflare Previewを見て「OK / NG / 気になる点」を返す。
 11. OK後のみmainへマージする。
 
 ## Codexへの標準依頼
@@ -47,8 +50,8 @@ GitHub を唯一の正本（source of truth）とします。
 
 例:
 
-- Rive Runtime導入
-- Playerリグのプロトタイプ
+- 新しい描画Runtimeの技術検証
+- Playerのアートプロトタイプ
 - 電車ステージのバッグドラッグ
 - アート素材更新
 
@@ -63,41 +66,39 @@ PR作成前に、変更予定ファイルと実差分ファイルが一致して
 標準順序:
 
 1. 基準アートを確認
-2. リグまたは素材化
+2. ゲーム用の独立オブジェクト構造へ整理
 3. PreviewでBefore / After確認
-4. モバイル実機相当で確認
+4. Android実機相当で確認
 5. 合格後にゲームへ統合
 
 画像生成APIを使う場合は、生成経路の実装と素材採用を別工程にします。失敗素材を修正するためにAPIを反復実行する前に、原因・品質ゲート・コストを確認します。
 
-## Riveを使う場合
+## PC専用制作ツールの扱い
 
-Rive Editor / `.riv` はアートとアニメーションの責務を持ち、Reactはゲームルールを持ちます。
+Rive Editorなど、Androidスマートフォンだけでは実用的に操作できない制作ツールを、本番開発の必須工程にしません。
 
-Reactからは、可能な限り意味的な状態だけを渡します。
+外部ツールが必要になった場合は、次の順に検討します。
 
-例:
+1. API / CLI / GitHub Actionsから操作できるか
+2. Codex Cloudで作業できるか
+3. Androidブラウザで実用的に操作できる代替があるか
+4. そのツール自体を使わず目的を達成できるか
 
-- `bagPosition = seat | lap | floor`
-- `npcPose = standing | seated`
-- `success = true | false`
-
-React側で腕・脚の座標を直接調整しない方針です。
-
-Riveファイルを更新した場合も、Riveの状態名・入力名・用途を `docs/rive-guidelines.md` に記録します。
+これらで解決できなければ、その方式を標準アーキテクチャ候補から外します。
 
 ## ユーザーに依頼する作業
 
 ユーザーへ依頼するのは、可能な限り次に限定します。
 
-- Previewを見てOK / NGを判断する
-- Rive Editorなど、接続されたツールから直接操作できない作業を行う
+- AndroidのPreviewを見てOK / NGを判断する
 - Secret / billing / 外部サービスの本人操作が必須な設定
+- セキュリティ上AIへ委任できない承認
 
-Gitの差分確認、PRの状態確認、GitHub Actionsログ確認は、可能な限りChatGPT / Codex / GitHubで完結させます。
+Gitの差分確認、PRの状態確認、GitHub Actionsログ確認、コード編集、ビルド、PC専用Editor操作は、標準ではユーザーに要求しません。
 
 ## 禁止する進め方
 
+- PCがないと続行できない工程を無検証で本番採用する
 - CodexのローカルGit状態を唯一の正本として扱う
 - 古いmainを基準に差分を判断する
 - ユーザーがCodexの長い実行結果を毎回ChatGPTへコピーすることを前提にする
