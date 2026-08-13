@@ -14,6 +14,8 @@
 
 現在は、ゲーム構造とアート制作を分離し、Riveを使った2Dリグ方式を次の本命候補として検証する方針です。
 
+Rive Player最小実験のリポジトリ側の準備として、Player 1体のRig階層、`standing` / `seated`の状態契約、アート品質ゲート、確認物、無料 / 有料の停止境界を [`docs/design/rive-player-experiment-spec.md`](./design/rive-player-experiment-spec.md) に定義しました。本番コードや依存パッケージにはまだ接続していません。
+
 ## 決定済みの原則
 
 - 1枚絵を後からゲーム用パーツへ無理に分解しない。
@@ -33,6 +35,10 @@
 Riveを本格導入する前に、「本番に使いたい品質のPlayer 1体を作り、同一キャラクターのまま自然に立つ / 座るを表現できるか」を最小コストで検証する。
 
 まだ電車ステージ全体はRive化しない。
+
+次の実作業は、Rive Editorの無料範囲で基準アートを1体作り、仕様書の品質ゲートを通した後、同一リグから`standing` / `seated`を作ることです。Editorを直接操作できるユーザーが [`docs/design/rive-player-experiment-spec.md`](./design/rive-player-experiment-spec.md) の名前と階層に従い、並列静止画と状態遷移のPreviewを確認物として残します。支払い、trial、upgradeが求められた場合は操作せず停止します。
+
+現時点ではアートと`.riv`が未作成のため、アート品質および同一人物性の受け入れ条件は未判定です。コードテストだけで完了扱いにはしません。
 
 受け入れ条件:
 

@@ -95,6 +95,8 @@ Riveへ入れたから採用、にはしません。
 
 電車背景、NPC、バッグを同時に作らないことで、Riveそのものの適性を小さく検証します。
 
+Player最小実験で使用するArtboard、Animation、State Machine、入力名、Rig階層、目視チェック項目は [`docs/design/rive-player-experiment-spec.md`](./design/rive-player-experiment-spec.md) を契約とします。品質合格前はReact Runtimeを追加せず、`seated`という意味的な状態以外の身体情報をReactへ公開しません。
+
 ## 導入判断
 
 無料範囲で可能な検証を先に行います。有料プランや追加サービスが必要になる場合、契約前に目的・費用・代替案を確認します。
