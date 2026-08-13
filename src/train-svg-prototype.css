@@ -21,3 +21,6 @@ button { font: inherit; }
 .state-switcher span { margin-top: 4px; font-size: clamp(.52rem, 2.25vw, .65rem); line-height: 1.25; opacity: .75; }
 @media (min-width: 480px) { .prototype-shell { padding-top: 34px; } .state-switcher { gap: 10px; } .state-switcher button { min-height: 72px; } }
 @media (prefers-reduced-motion: reduce) { .state-switcher button { transition: none; } }
+.debug-toggle { display: block; min-height: 44px; margin: 12px auto 0; padding: 8px 16px; border: 1px dashed rgb(246 189 124 / 55%); border-radius: 999px; color: #d7ddd8; background: transparent; cursor: pointer; font-size: .68rem; letter-spacing: .1em; }
+.debug-toggle:focus-visible { outline: 3px solid #f6bd7c; outline-offset: 3px; }
+.skeleton-joints { fill: #ffec57; stroke: #9c2d38; stroke-width: 5; paint-order: stroke; }

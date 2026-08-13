@@ -10,6 +10,7 @@ const states: { id: SceneState; label: string; hint: string }[] = [
 
 export function TrainSvgPrototype() {
   const [scene, setScene] = useState<SceneState>('before')
+  const [debugSkeleton, setDebugSkeleton] = useState(false)
   const uid = useId().replace(/:/g, '')
   const seated = scene !== 'before'
   const bagTransform = scene === 'before' ? 'translate(498 846)' : scene === 'lap' ? 'translate(286 873) rotate(-4)' : 'translate(188 1258) rotate(2)'
@@ -84,87 +85,78 @@ export function TrainSvgPrototype() {
         </g>
 
         <g id="player" stroke="#493b35" strokeLinecap="round" strokeLinejoin="round">
-          <g id="player-shadow" fill="#2f423f" stroke="none" opacity=".18"><ellipse cx="287" cy="1197" rx="185" ry="32"/></g>
-          <g id="player-lower-body">
-            <g id="player-thigh" fill="#48545d" strokeWidth="9"><path d="M230 976Q285 954 345 981L474 1050Q496 1076 470 1110Q452 1131 419 1117L298 1065Q248 1058 217 1036Z"/></g>
-            <g id="player-lower-leg" fill="#59656d" strokeWidth="9"><path d="M421 1081Q453 1066 479 1088L453 1190Q445 1213 416 1210L386 1204Q374 1197 383 1175Z"/></g>
-            <g id="player-shoe" fill="#4a3930" strokeWidth="8"><path d="M378 1180Q410 1174 453 1192L490 1220Q501 1241 474 1250H373Q351 1246 355 1227Z"/><path fill="#d6c8ad" stroke="none" d="M365 1222Q423 1231 486 1224L482 1239H362Z"/></g>
+          {/* z-order: shadow → rear leg/arm → pelvis/torso → front leg/arm → neck → head */}
+          <ellipse id="player-shadow" cx="302" cy="1248" rx="184" ry="30" fill="#2f423f" stroke="none" opacity=".18"/>
+          <g id="player-right-leg" aria-label="rear right leg" transform="translate(28 0)">
+            <g id="player-right-thigh"><path fill="#424f58" strokeWidth="9" d="M267 969Q293 948 329 954L424 1001Q454 1018 450 1050Q446 1078 415 1081L318 1048Q286 1042 264 1021Z"/></g>
+            <g id="player-right-lower-leg"><path fill="#4f5e66" strokeWidth="9" d="M413 1040Q438 1038 452 1058L456 1186Q453 1213 425 1216L396 1211Q384 1205 388 1185L390 1070Z"/></g>
+            <g id="player-right-foot"><path fill="#40342f" strokeWidth="8" d="M391 1182Q425 1173 457 1190L499 1218Q510 1238 485 1248L397 1247Q376 1244 378 1225Z"/><path fill="#d6c8ad" stroke="none" d="M384 1228Q435 1236 497 1225L495 1240H383Z"/></g>
           </g>
+          <g id="player-right-arm" fill={`url(#${uid}-orange)`} strokeWidth="10">
+            <g id="player-right-upper-arm"><path d="M340 773Q373 778 387 809L396 902Q397 928 372 935L352 923L337 816Z"/></g>
+            <g id="player-right-forearm"><path d={scene === 'lap' ? 'M379 893Q398 892 407 914L380 1009Q373 1031 349 1025L333 1011L357 918Z' : 'M378 897Q397 901 397 924L365 1001Q356 1020 335 1011L322 995L354 916Z'}/></g>
+            <g id="player-right-hand"><path fill="#f1d5b5" d={scene === 'lap' ? 'M342 997Q363 986 381 1004L379 1035Q358 1052 338 1034Z' : 'M324 982Q346 973 363 993L358 1019Q337 1034 321 1014Z'}/></g>
+          </g>
+          <g id="player-pelvis"><path fill="#3f4b54" strokeWidth="9" d="M184 932Q246 910 338 930L363 992Q333 1025 273 1033Q215 1034 177 999Z"/></g>
           <g id="player-torso">
-            <path fill={`url(#${uid}-orange)`} strokeWidth="11" d="M171 759Q210 728 273 731Q337 732 370 780L388 975Q356 1021 286 1026Q211 1028 166 991L145 833Q143 786 171 759Z"/>
-            <path fill="#f2b466" stroke="none" d="M178 783Q210 755 245 756L222 992Q188 984 171 965L157 833Q156 801 178 783Z" opacity=".46"/>
-            <path fill="none" stroke="#8d4533" strokeWidth="6" d="M273 753V1007M277 855h20" opacity=".7"/>
-            <path fill="#f1d5b5" strokeWidth="7" d="M238 716L240 755Q270 781 302 750L300 704Z"/>
+            <path fill={`url(#${uid}-orange)`} strokeWidth="11" d="M171 758Q208 730 272 730Q335 731 365 775L374 944Q337 976 276 981Q211 981 169 950L146 825Q143 784 171 758Z"/>
+            <path fill="#f2b466" stroke="none" d="M176 782Q204 754 239 752L220 957Q190 951 174 936L158 825Q155 798 176 782Z" opacity=".42"/>
+            <path fill="none" stroke="#8d4533" strokeWidth="6" d="M272 759V960" opacity=".65"/>
+            <path fill="#fff0da" strokeWidth="6" d="M224 752L270 779L316 750L302 810H242Z"/>
           </g>
+          <g id="player-left-leg" aria-label="front left leg">
+            <g id="player-left-thigh"><path fill="#56636b" strokeWidth="9" d="M194 973Q224 951 262 960L373 1011Q404 1026 400 1058Q395 1087 362 1090L244 1052Q209 1046 185 1022Z"/></g>
+            <g id="player-left-lower-leg"><path fill="#647078" strokeWidth="9" d="M363 1049Q390 1044 405 1066L401 1195Q396 1222 367 1223L338 1217Q325 1209 331 1189L338 1076Z"/></g>
+            <g id="player-left-foot"><path fill="#4a3930" strokeWidth="8" d="M335 1188Q368 1179 401 1197L439 1227Q448 1248 422 1257H333Q311 1253 315 1234Z"/><path fill="#e0d0b6" stroke="none" d="M320 1237Q370 1245 437 1234L433 1249H319Z"/></g>
+          </g>
+          <g id="player-left-arm" fill={`url(#${uid}-orange)`} strokeWidth="10">
+            <g id="player-left-upper-arm"><path d="M174 779Q140 794 143 834L166 927Q172 950 197 947L216 931L205 810Z"/></g>
+            <g id="player-left-forearm"><path d={scene === 'lap' ? 'M178 914Q196 903 213 919L271 1001Q282 1021 261 1037L243 1038L183 953Z' : 'M178 914Q197 906 212 924L250 997Q258 1018 237 1028L219 1022L178 948Z'}/></g>
+            <g id="player-left-hand"><path fill="#f1d5b5" d={scene === 'lap' ? 'M245 1000Q267 990 284 1010L283 1038Q260 1055 242 1035Z' : 'M220 992Q243 982 258 1004L253 1031Q231 1044 216 1024Z'}/></g>
+          </g>
+          <g id="player-neck"><path fill="#e7c49f" strokeWidth="7" d="M235 700L237 766Q269 790 304 763L304 695Z"/></g>
           <g id="player-head">
             <path fill="#f1d5b5" strokeWidth="10" d="M180 592Q197 528 267 515Q330 509 363 557Q385 591 373 653Q364 705 317 731Q270 754 223 728Q175 701 169 649Q166 618 180 592Z"/>
-            <path id="player-hair" fill="#4e3a32" strokeWidth="9" d="M178 615Q161 563 202 525Q244 485 307 506Q361 520 378 568Q348 553 320 559Q286 570 254 554Q226 586 178 615Z"/>
+            <path fill="#4e3a32" strokeWidth="9" d="M178 615Q161 563 202 525Q244 485 307 506Q361 520 378 568Q348 553 320 559Q286 570 254 554Q226 586 178 615Z"/>
             <path fill="none" stroke="#4e3a32" strokeWidth="15" d="M177 603Q168 650 190 682"/>
-            <g id="player-face" fill="none" strokeWidth="6">
-              <path d="M228 627q12-8 24 1m53-3q12-7 23 2"/>
-              <path strokeWidth="8" d="M241 640h1m76-1h1"/>
-              <path stroke="#b77c6a" strokeWidth="5" d="M275 665q11 9 24-1"/>
-              <path stroke="#d3947f" strokeWidth="7" d="M211 664h13m104-2h12" opacity=".55"/>
-            </g>
+            <g id="player-face" fill="none" strokeWidth="6"><path d="M228 627q12-8 24 1m53-3q12-7 23 2"/><path strokeWidth="8" d="M241 640h1m76-1h1"/><path stroke="#b77c6a" strokeWidth="5" d="M275 665q11 9 24-1"/></g>
           </g>
-          <g id="player-arms" fill={`url(#${uid}-orange)`} strokeWidth="10">
-            {scene === 'lap' ? <>
-              <g id="player-upper-arm"><path d="M175 789Q139 806 143 851L178 951Q190 976 218 962L232 946L206 822Z"/><path d="M346 784Q380 789 393 829L407 931Q409 956 382 964L363 950L351 835Z"/></g>
-              <g id="player-forearm"><path d="M185 929Q202 915 222 935L283 1003L251 1038Q217 1007 181 967Q170 948 185 929Z"/><path d="M391 919Q372 911 358 934L319 1008L356 1033Q383 996 406 955Q414 932 391 919Z"/></g>
-              <g id="player-hand" fill="#f1d5b5"><path d="M246 1016q25-25 52-4l13 19q-26 24-57 8Z"/><path d="M310 1024q18-27 48-10l10 21q-23 21-52 9Z"/></g>
-            </> : <>
-              <g id="player-upper-arm"><path d="M174 790Q139 814 148 866L184 958Q195 979 220 964L234 947L208 818Z"/><path d="M351 789Q379 803 380 844L369 926Q364 951 341 945L327 927L335 817Z"/></g>
-              <g id="player-forearm"><path d="M188 937Q210 923 227 947L266 1012L230 1034Q196 1001 179 967Q175 949 188 937Z"/><path d="M359 916Q339 907 326 929L303 989L340 1007Q364 975 374 945Q375 926 359 916Z"/></g>
-              <g id="player-hand" fill="#f1d5b5"><path d="M226 1011q25-22 48 2l5 19q-29 19-51 1Z"/><path d="M297 986q21-20 47 1l2 20q-25 15-47-1Z"/></g>
-            </>}
-          </g>
+          {debugSkeleton && <g className="skeleton-joints" aria-label="Player skeleton joints"><circle cx="185" cy="790" r="10"/><circle cx="360" cy="790" r="10"/><circle cx="188" cy="924" r="9"/><circle cx="378" cy="912" r="9"/><circle cx="220" cy="975" r="10"/><circle cx="302" cy="972" r="10"/><circle cx="370" cy="1058" r="9"/><circle cx="426" cy="1052" r="9"/><circle cx="368" cy="1203" r="8"/><circle cx="428" cy="1197" r="8"/></g>}
         </g>
 
         <g id="npc" stroke="#3d4242" strokeLinecap="round" strokeLinejoin="round">
           {seated ? <g id="npc-seated">
-            <ellipse cx="699" cy="1210" rx="175" ry="31" fill="#2f423f" stroke="none" opacity=".16"/>
-            <g id="npc-lower-body" strokeWidth="10">
-              <g id="npc-thigh" fill="#53636b"><path d="M608 979Q659 956 720 982L818 1039Q840 1060 824 1090Q810 1114 781 1108L681 1066Q624 1066 590 1032Z"/></g>
-              <g id="npc-lower-leg" fill="#66757b"><path d="M784 1072Q811 1063 834 1086L829 1196Q824 1217 799 1218H766Q752 1211 758 1190Z"/><path d="M649 1051Q674 1045 693 1066L686 1185Q682 1207 658 1207H628Q615 1200 620 1179Z"/></g>
-              <g id="npc-shoe" fill="#343e40"><path d="M755 1188Q796 1179 831 1200L860 1228Q864 1246 841 1251H750Q730 1245 735 1227Z"/><path d="M618 1178Q655 1171 685 1192L706 1219Q708 1237 685 1241H606Q590 1234 594 1218Z"/></g>
+            {/* z-order: rear leg/arm → pelvis/torso → front leg/arm → neck → head */}
+            <ellipse cx="710" cy="1250" rx="177" ry="28" fill="#2f423f" stroke="none" opacity=".16"/>
+            <g id="npc-right-leg">
+              <g id="npc-right-thigh"><path fill="#4c5c64" strokeWidth="9" d="M672 963Q704 947 738 958L818 1000Q843 1015 840 1045Q836 1071 808 1075L719 1046Q689 1042 669 1023Z"/></g>
+              <g id="npc-right-lower-leg"><path fill="#596a71" strokeWidth="9" d="M806 1038Q831 1035 844 1057L849 1187Q844 1214 817 1215L791 1209Q780 1202 784 1183L784 1067Z"/></g>
+              <g id="npc-right-foot"><path fill="#343e40" strokeWidth="8" d="M785 1182Q817 1175 849 1193L884 1221Q892 1241 868 1249H786Q765 1245 769 1227Z"/></g>
             </g>
-            <g id="npc-torso" strokeWidth="11">
-              <path fill={`url(#${uid}-coat)`} d="M587 738Q625 708 684 711Q746 710 780 755L793 964Q758 1004 690 1009Q620 1010 580 976L562 808Q559 768 587 738Z"/>
-              <path fill="#8ea0aa" stroke="none" d="M585 759Q614 730 647 731L626 985Q598 981 582 963L570 809Q567 781 585 759Z" opacity=".4"/>
-              <path fill="#e5c5a7" d="M646 694L647 732Q676 756 704 727L704 683Z"/>
+            <g id="npc-right-arm" fill={`url(#${uid}-coat)`} strokeWidth="10"><g id="npc-right-upper-arm"><path d="M755 760Q786 768 796 802L798 901Q796 925 772 930L753 916L746 800Z"/></g><g id="npc-right-forearm"><path d="M779 895Q799 893 808 914L790 1001Q783 1022 761 1017L746 1001L760 920Z"/></g><g id="npc-right-hand"><path fill="#e5c5a7" d="M751 990Q773 979 791 999L790 1027Q767 1043 750 1024Z"/></g></g>
+            <g id="npc-pelvis"><path fill="#475760" strokeWidth="9" d="M593 932Q657 910 759 934L784 991Q750 1022 684 1028Q623 1027 587 997Z"/></g>
+            <g id="npc-torso"><path fill={`url(#${uid}-coat)`} strokeWidth="11" d="M587 738Q624 708 684 710Q744 711 775 753L784 946Q746 976 684 979Q621 978 580 949L562 807Q559 766 587 738Z"/><path fill="#dce4df" strokeWidth="6" d="M637 724L682 755L727 723L716 791H648Z"/></g>
+            <g id="npc-left-leg">
+              <g id="npc-left-thigh"><path fill="#5c6d75" strokeWidth="9" d="M602 966Q633 946 670 956L766 1007Q793 1023 789 1054Q784 1081 753 1085L648 1048Q616 1044 594 1022Z"/></g>
+              <g id="npc-left-lower-leg"><path fill="#6a7980" strokeWidth="9" d="M752 1046Q778 1041 793 1063L789 1195Q784 1221 756 1222L729 1217Q716 1209 722 1189L728 1074Z"/></g>
+              <g id="npc-left-foot"><path fill="#3b4648" strokeWidth="8" d="M726 1187Q758 1178 790 1197L824 1226Q833 1247 808 1255H725Q704 1251 708 1233Z"/></g>
             </g>
-            <g id="npc-arms" fill={`url(#${uid}-coat)`} strokeWidth="10">
-              <path d="M584 765Q550 786 558 832L588 941Q598 963 623 951L638 935L614 789Z"/><path d="M768 765Q798 779 801 821L790 933Q786 957 761 950L745 931L748 795Z"/>
-              <path fill="#e5c5a7" d="M590 926q25-19 45 5l8 23q-24 19-48 1Zm154-2q24-19 45 4l5 22q-24 17-47 0Z"/>
-            </g>
+            <g id="npc-left-arm" fill={`url(#${uid}-coat)`} strokeWidth="10"><g id="npc-left-upper-arm"><path d="M589 760Q555 777 558 819L575 915Q580 939 605 938L624 921L620 790Z"/></g><g id="npc-left-forearm"><path d="M586 903Q606 895 621 914L651 998Q658 1019 637 1029L620 1021L582 936Z"/></g><g id="npc-left-hand"><path fill="#e5c5a7" d="M619 994Q641 984 658 1005L654 1032Q632 1047 616 1027Z"/></g></g>
+            <g id="npc-neck"><path fill="#d7b594" strokeWidth="7" d="M643 681L645 745Q676 770 708 742L708 677Z"/></g>
+            <g id="npc-head" transform="translate(-55 -4)"><path fill="#e5c5a7" strokeWidth="10" d="M647 518Q661 458 722 438Q786 424 828 466Q862 499 854 559Q849 613 807 644Q764 675 715 655Q665 636 649 588Q640 554 647 518Z"/><path fill="#434a4b" strokeWidth="9" d="M649 536Q636 482 679 447Q726 408 786 434Q827 451 850 493Q814 472 785 486Q745 510 707 481Q688 522 649 536Z"/><g id="npc-face" fill="none" strokeWidth="6"><path d="M697 548q12-8 25 0m53-5q12-7 24 0"/><path strokeWidth="8" d="M710 561h1m77-3h1"/><path stroke="#9f7465" strokeWidth="5" d="M741 590q12 6 24-3"/></g></g>
+            {debugSkeleton && <g className="skeleton-joints"><circle cx="600" cy="775" r="10"/><circle cx="772" cy="775" r="10"/><circle cx="596" cy="915" r="9"/><circle cx="784" cy="910" r="9"/><circle cx="630" cy="970" r="10"/><circle cx="714" cy="970" r="10"/><circle cx="758" cy="1058" r="9"/><circle cx="817" cy="1050" r="9"/><circle cx="758" cy="1203" r="8"/><circle cx="817" cy="1198" r="8"/></g>}
           </g> : <g id="npc-standing">
-            <ellipse cx="747" cy="1375" rx="142" ry="32" fill="#2f423f" stroke="none" opacity=".16"/>
-            <g id="npc-lower-body" strokeWidth="10">
-              <g id="npc-thigh" fill="#53636b"><path d="M657 919Q704 902 746 921L749 1111Q725 1132 685 1116L652 987Z"/><path d="M744 918Q782 908 814 936L849 1104Q828 1130 789 1122L738 991Z"/></g>
-              <g id="npc-lower-leg" fill="#66757b"><path d="M685 1102Q717 1093 747 1110L735 1307Q725 1330 690 1323L668 1313Z"/><path d="M792 1110Q824 1097 850 1118L865 1307Q856 1333 822 1329L800 1317Z"/></g>
-              <g id="npc-shoe" fill="#343e40"><path d="M665 1301Q704 1292 736 1313L758 1341Q760 1362 734 1367H650Q628 1361 636 1339Z"/><path d="M801 1306Q836 1298 865 1319L892 1349Q894 1368 869 1373H785Q765 1365 773 1345Z"/></g>
-            </g>
-            <g id="npc-torso" strokeWidth="11">
-              <path fill={`url(#${uid}-coat)`} d="M639 716Q677 686 735 691Q791 694 817 739L830 930Q793 970 731 973Q672 971 631 938L614 781Q611 744 639 716Z"/>
-              <path fill="#8ea0aa" stroke="none" d="M639 738Q666 710 700 711L678 950Q650 945 634 927L623 782Q620 755 639 738Z" opacity=".4"/>
-              <path fill="#e5c5a7" d="M695 671L697 713Q725 737 754 708L754 662Z"/>
-            </g>
-            <g id="npc-arms" fill={`url(#${uid}-coat)`} strokeWidth="10">
-              <path d="M637 740Q603 758 606 805L625 984Q632 1008 659 998L674 981L666 766Z"/><path d="M804 747Q832 765 834 805L848 973Q847 999 820 998L804 981L783 775Z"/>
-              <g id="npc-hand" fill="#e5c5a7"><path d="M623 974q26-20 48 4l3 28q-26 23-48 0Z"/><path d="M809 972q25-19 47 4l1 27q-23 22-46 1Z"/></g>
-            </g>
+            <ellipse cx="744" cy="1374" rx="143" ry="30" fill="#2f423f" stroke="none" opacity=".16"/>
+            <g id="npc-right-leg"><g id="npc-right-thigh"><path fill="#4e5e66" strokeWidth="9" d="M724 929Q755 916 786 929L807 1091Q796 1117 765 1118Q741 1112 737 1089Z"/></g><g id="npc-right-lower-leg"><path fill="#596a71" strokeWidth="9" d="M766 1095Q793 1088 810 1107L827 1306Q819 1332 789 1331L765 1319Z"/></g><g id="npc-right-foot"><path fill="#343e40" strokeWidth="8" d="M766 1304Q797 1297 827 1316L860 1345Q866 1365 842 1372H762Q741 1367 747 1347Z"/></g></g>
+            <g id="npc-right-arm" fill={`url(#${uid}-coat)`} strokeWidth="10"><g id="npc-right-upper-arm"><path d="M802 744Q832 758 836 797L844 927Q843 950 819 954L800 938L782 774Z"/></g><g id="npc-right-forearm"><path d="M825 918Q846 918 852 941L856 1003Q853 1026 831 1027L814 1012L810 944Z"/></g><g id="npc-right-hand"><path fill="#e5c5a7" d="M817 1000Q839 989 857 1009L856 1037Q833 1053 816 1034Z"/></g></g>
+            <g id="npc-pelvis"><path fill="#475760" strokeWidth="9" d="M651 913Q713 894 800 917L813 968Q775 994 725 992Q680 991 647 966Z"/></g>
+            <g id="npc-torso"><path fill={`url(#${uid}-coat)`} strokeWidth="11" d="M639 716Q677 686 735 691Q791 694 817 739L824 925Q788 953 730 958Q673 956 634 929L614 781Q611 744 639 716Z"/><path fill="#dce4df" strokeWidth="6" d="M688 701L732 733L775 700L765 770H700Z"/></g>
+            <g id="npc-left-leg"><g id="npc-left-thigh"><path fill="#607078" strokeWidth="9" d="M656 929Q686 916 718 929L730 1092Q717 1118 686 1115Q662 1108 660 1085Z"/></g><g id="npc-left-lower-leg"><path fill="#6b7980" strokeWidth="9" d="M686 1092Q713 1086 730 1105L724 1305Q714 1330 684 1326L661 1314Z"/></g><g id="npc-left-foot"><path fill="#3b4648" strokeWidth="8" d="M660 1301Q692 1294 724 1312L752 1341Q758 1361 734 1368H650Q631 1362 637 1342Z"/></g></g>
+            <g id="npc-left-arm" fill={`url(#${uid}-coat)`} strokeWidth="10"><g id="npc-left-upper-arm"><path d="M637 740Q604 755 606 797L616 929Q620 953 645 954L663 937L666 770Z"/></g><g id="npc-left-forearm"><path d="M628 918Q648 916 658 938L658 1003Q654 1026 632 1027L615 1011L611 944Z"/></g><g id="npc-left-hand"><path fill="#e5c5a7" d="M617 1000Q639 989 657 1009L656 1037Q633 1053 616 1034Z"/></g></g>
+            <g id="npc-neck"><path fill="#d7b594" strokeWidth="7" d="M695 650L697 717Q727 742 758 714L758 646Z"/></g>
+            <g id="npc-head"><path fill="#e5c5a7" strokeWidth="10" d="M647 518Q661 458 722 438Q786 424 828 466Q862 499 854 559Q849 613 807 644Q764 675 715 655Q665 636 649 588Q640 554 647 518Z"/><path fill="#434a4b" strokeWidth="9" d="M649 536Q636 482 679 447Q726 408 786 434Q827 451 850 493Q814 472 785 486Q745 510 707 481Q688 522 649 536Z"/><g id="npc-face" fill="none" strokeWidth="6"><path d="M697 548q12-8 25 0m53-5q12-7 24 0"/><path strokeWidth="8" d="M710 561h1m77-3h1"/><path stroke="#9f7465" strokeWidth="5" d="M741 590q12 6 24-3"/></g></g>
+            {debugSkeleton && <g className="skeleton-joints"><circle cx="650" cy="760" r="10"/><circle cx="803" cy="760" r="10"/><circle cx="638" cy="935" r="9"/><circle cx="830" cy="937" r="9"/><circle cx="687" cy="947" r="10"/><circle cx="769" cy="947" r="10"/><circle cx="705" cy="1104" r="9"/><circle cx="787" cy="1104" r="9"/><circle cx="694" cy="1313" r="8"/><circle cx="797" cy="1316" r="8"/></g>}
           </g>}
-          <g id="npc-head" transform={seated ? 'translate(-55 -4)' : undefined}>
-            <path fill="#e5c5a7" strokeWidth="10" d="M647 518Q661 458 722 438Q786 424 828 466Q862 499 854 559Q849 613 807 644Q764 675 715 655Q665 636 649 588Q640 554 647 518Z"/>
-            <path fill="#434a4b" strokeWidth="9" d="M649 536Q636 482 679 447Q726 408 786 434Q827 451 850 493Q814 472 785 486Q745 510 707 481Q688 522 649 536Z"/>
-            <path fill="none" stroke="#434a4b" strokeWidth="17" d="M846 500Q866 548 844 592"/>
-            <g id="npc-face" fill="none" strokeWidth="6">
-              <path d="M697 548q12-8 25 0m53-5q12-7 24 0"/>
-              <path strokeWidth="8" d="M710 561h1m77-3h1"/>
-              <path stroke="#9f7465" strokeWidth="5" d="M741 590q12 6 24-3"/>
-              <path stroke="#c78d7d" strokeWidth="7" d="M680 584h13m111-6h12" opacity=".45"/>
-            </g>
-          </g>
         </g>
 
         <g id="bag" transform={bagTransform} filter={`url(#${uid}-shadow)`} stroke="#4d3528" strokeLinecap="round" strokeLinejoin="round">
@@ -188,5 +180,8 @@ export function TrainSvgPrototype() {
         <strong>{item.label}</strong><span>{item.hint}</span>
       </button>)}
     </nav>
+    <button className="debug-toggle" type="button" aria-pressed={debugSkeleton} onClick={() => setDebugSkeleton((value) => !value)}>
+      DEBUG SKELETON {debugSkeleton ? 'ON' : 'OFF'}
+    </button>
   </main>
 }
