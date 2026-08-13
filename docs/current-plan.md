@@ -6,7 +6,7 @@
 
 ## 現在地
 
-Layered Art + PixiJS Prototype v1を実装し、ローカルのtypecheck・test・buildで構造を確認しました。Android Previewでの実機確認はPR作成後の次の品質ゲートです。
+Layered Art + PixiJS Prototype v1を実装し、ローカル検査に加えてAndroid実機でバッグのタッチ・ドラッグ・ドロップが正常に動作することを確認しました。
 
 - Before / Afterを別々の背景Spriteとして読み込む。
 - バッグを独立した透過Spriteとして表示し、指でドラッグする。
@@ -18,8 +18,9 @@ Layered Art + PixiJS Prototype v1を実装し、ローカルのtypecheck・test�
 - Image APIは呼び出していない。
 - Android縦画面向けに表示枠を4:5にし、PixiJSの`sceneRoot`全体のboundsから単一のscale + translateを計算するcamera fitを実装した。Player、NPC、Bag、座席、dropZoneを同じ構図内に収め、`?debug=1`ではscene boundsとviewport枠を表示・ログ出力できる。
 - バッグのpointer座標を、バッグとdropZoneが所属する`sceneRoot`のlocal座標へ統一した。pointerdown時の掴み位置offsetを保持するため、camera scale、CSS縮小、DPRに依存せずバッグが指へ追従する。
+- Android実機で、タッチ時にジャンプしないこと、掴んだ位置とのoffsetを保って追従すること、表示中のdropZoneで成功判定できること、Before→操作→Afterが成立することを確認済み。この座標変換・grab offset・ドラッグ・ドロップ判定を今後の正常動作する基準とし、アート、レスポンシブ表示、演出、Before / Afterを変更しても退行させない。
 
-次の判定はAndroid Preview上で、表示の自然さ、指追従、背景切替時のサイズ・座標・倍率不変、resetを確認することです。
+次の判定はAndroid Preview上で、表示の自然さ、背景切替時のサイズ・座標・倍率不変、resetを確認することです。確認済みのドラッグ処理そのものは、明確な不具合がない限り変更しません。
 
 Androidスマホ上で **PixiJS Prototype v1** を実機確認し、次を確認できました。
 
@@ -52,6 +53,7 @@ Androidスマホ上で **PixiJS Prototype v1** を実機確認し、次を確認
 - 操作対象は最初から独立アセットとして設計する。
 - Image APIを反復試行の主工程にしない。
 - Prototypeの合格前に本番ゲーム、採点、他ステージへ組み込まない。
+- 現在の`sceneRoot` local座標変換、grab offset保持、バッグ移動、同一座標系でのdrop判定を操作系の回帰基準とする。今後の見た目・viewport・演出変更ではこの処理を原則変更せず、既存の座標・drag regression testを必須で通す。
 
 ## 次のタスク
 
@@ -114,6 +116,7 @@ Before合格後:
 
 - Layered Art + PixiJS Prototype v1で、Before / After背景Sprite、独立Bag Sprite、scene config、settle + crossfade、resetを実装した（Android Preview確認待ち）。
 - 仮素材はローカルSVGのみで用意し、Image APIを呼び出さず、人物のPixiJS Graphics描画を削除した。
+- Layered Art版のバッグ操作について、Android実機で座標変換、grab offset、指追従、drop判定、Before→After遷移が正常に動作することを確認し、今後の回帰基準として固定した。
 
 - Rive Player最小実験の契約と品質ゲートを文書化したが、PC専用Editorを標準工程にしない方針へ移行した。
 - Androidスマホだけで開発を継続する正式アーキテクチャを [`docs/android-only-development-architecture.md`](./android-only-development-architecture.md) に定義した。
