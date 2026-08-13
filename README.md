@@ -30,6 +30,16 @@ npm run dev
 | `npm run typecheck` | TypeScriptのみ検査 |
 | `npm test` | ゲーム進行と判定のテスト |
 
+### AI支援開発の進め方
+
+GitHubを仕様・進捗・PR状態の唯一の正本として扱います。ChatGPT / Codexは作業開始前に [`AGENTS.md`](./AGENTS.md) と [`docs/current-plan.md`](./docs/current-plan.md) を確認してください。
+
+- 役割分担と標準フロー: [`docs/development-workflow.md`](./docs/development-workflow.md)
+- 現在地と次のタスク: [`docs/current-plan.md`](./docs/current-plan.md)
+- Rive導入ルール: [`docs/rive-guidelines.md`](./docs/rive-guidelines.md)
+
+ユーザーがChatGPTとCodexの間で長い実行ログを手作業で中継することを標準運用にせず、コード・仕様・進捗・CI結果はGitHub上で確認できる状態を優先します。
+
 ## 公開
 
 `npm run build` で生成される `dist/` を、Cloudflare Workers Static Assetsとして公開します。設定は `wrangler.jsonc` にあり、SPA用のフォールバックも有効にしています。Workerのサーバーサイドスクリプトは使用しません。
