@@ -1,10 +1,13 @@
 export const trainPixiScene = {
   canvas: { width: 1024, height: 1536 },
   assets: {
-    beforeBackground: '/prototypes/train-pixi/before.svg',
-    afterBackground: '/prototypes/train-pixi/after.svg',
+    background: '/prototypes/train-pixi/background.svg',
+    player: '/prototypes/train-pixi/player.svg',
+    npcStanding: '/prototypes/train-pixi/npc-standing.svg',
+    npcSeated: '/prototypes/train-pixi/npc-seated.svg',
     bagSprite: '/prototypes/train-pixi/bag.svg',
   },
+  artwork: { x: 0, y: 86, width: 1024, height: 1316 },
   bag: {
     startPosition: { x: 650, y: 1035 },
     anchor: { x: 0.5, y: 0.5 },
@@ -17,4 +20,5 @@ export const trainPixiScene = {
     settleMs: 150,
     crossfadeMs: 260,
   },
+  viewportPadding: 12,
 } as const

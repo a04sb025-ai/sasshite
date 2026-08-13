@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Application, Assets, Sprite } from 'pixi.js'
+import { Application, Assets, Container, Graphics, Sprite } from 'pixi.js'
+import { fitSceneToViewport } from './fitSceneToViewport'
 import { isBagInTarget, stagePoint, TRAIN_STAGE, type TrainPrototypeState } from './trainPixiModel'
 import { trainPixiScene } from './trainPixiScene'
 
@@ -16,12 +17,13 @@ export default function TrainPixiPrototype() {
     let initialized = false
     let settleTimer: number | undefined
     let animationFrame: number | undefined
+    let resizeObserver: ResizeObserver | undefined
     const app = new Application()
 
     void (async () => {
       await app.init({
-        width: TRAIN_STAGE.width,
-        height: TRAIN_STAGE.height,
+        width: 1,
+        height: 1,
         background: '#eee9df',
         antialias: true,
         autoDensity: true,
@@ -33,30 +35,78 @@ export default function TrainPixiPrototype() {
       app.canvas.setAttribute('aria-hidden', 'true')
       host.appendChild(app.canvas)
 
-      const [beforeTexture, afterTexture, bagTexture] = await Promise.all([
-        Assets.load(trainPixiScene.assets.beforeBackground),
-        Assets.load(trainPixiScene.assets.afterBackground),
+      const [backgroundTexture, playerTexture, standingTexture, seatedTexture, bagTexture] = await Promise.all([
+        Assets.load(trainPixiScene.assets.background),
+        Assets.load(trainPixiScene.assets.player),
+        Assets.load(trainPixiScene.assets.npcStanding),
+        Assets.load(trainPixiScene.assets.npcSeated),
         Assets.load(trainPixiScene.assets.bagSprite),
       ])
       if (disposed) return
 
-      const before = new Sprite(beforeTexture)
-      const after = new Sprite(afterTexture)
-      for (const background of [before, after]) {
-        background.width = TRAIN_STAGE.width
-        background.height = TRAIN_STAGE.height
+      const sceneRoot = new Container({ label: 'sceneRoot' })
+      const background = new Container({ label: 'background' })
+      const player = new Container({ label: 'player' })
+      const npc = new Container({ label: 'npc' })
+      const dropZone = new Container({ label: 'dropZone' })
+      const backgroundSprite = new Sprite(backgroundTexture)
+      const playerSprite = new Sprite(playerTexture)
+      const standingNpc = new Sprite(standingTexture)
+      const seatedNpc = new Sprite(seatedTexture)
+      for (const artwork of [backgroundSprite, playerSprite, standingNpc, seatedNpc]) {
+        artwork.position.set(trainPixiScene.artwork.x, trainPixiScene.artwork.y)
+        artwork.width = trainPixiScene.artwork.width
+        artwork.height = trainPixiScene.artwork.height
       }
-      after.alpha = 0
-      app.stage.addChild(before, after)
+      seatedNpc.alpha = 0
+      background.addChild(backgroundSprite)
+      player.addChild(playerSprite)
+      npc.addChild(standingNpc, seatedNpc)
+
+      const target = trainPixiScene.dropZones[0]
+      const targetMarker = new Graphics()
+        .circle(target.x, target.y, target.radius)
+        .fill({ color: '#fff8df', alpha: 0.28 })
+        .stroke({ color: '#8d7657', width: 8, alpha: 0.75 })
+      dropZone.addChild(targetMarker)
 
       const bag = new Sprite(bagTexture)
+      bag.label = 'bag'
       bag.anchor.set(trainPixiScene.bag.anchor.x, trainPixiScene.bag.anchor.y)
       bag.width = trainPixiScene.bag.size.width
       bag.height = trainPixiScene.bag.size.height
       bag.position.set(trainPixiScene.bag.startPosition.x, trainPixiScene.bag.startPosition.y)
       bag.eventMode = 'static'
       bag.cursor = 'grab'
-      app.stage.addChild(bag)
+      sceneRoot.addChild(background, player, npc, dropZone, bag)
+      app.stage.addChild(sceneRoot)
+
+      const debug = new URLSearchParams(window.location.search).has('debug')
+      const viewportDebug = new Graphics({ label: 'viewportDebug' })
+      app.stage.addChild(viewportDebug)
+      const fitScene = () => {
+        const width = Math.max(1, Math.round(host.clientWidth))
+        const height = Math.max(1, Math.round(host.clientHeight))
+        app.renderer.resize(width, height)
+        sceneRoot.scale.set(1)
+        sceneRoot.position.set(0)
+        const bounds = sceneRoot.getLocalBounds()
+        const viewport = { x: 0, y: 0, width: app.screen.width, height: app.screen.height }
+        const fit = fitSceneToViewport(bounds, viewport, trainPixiScene.viewportPadding)
+        sceneRoot.scale.set(fit.scale)
+        sceneRoot.position.set(fit.x, fit.y)
+        viewportDebug.clear()
+        if (debug) {
+          viewportDebug.rect(1, 1, viewport.width - 2, viewport.height - 2).stroke({ color: '#1463ff', width: 2 })
+          viewportDebug
+            .rect(fit.x + bounds.x * fit.scale, fit.y + bounds.y * fit.scale, bounds.width * fit.scale, bounds.height * fit.scale)
+            .stroke({ color: '#ff2d55', width: 2 })
+          console.info('[TrainPixi viewport]', { sceneBounds: bounds.rectangle, viewport, fit })
+        }
+      }
+      resizeObserver = new ResizeObserver(fitScene)
+      resizeObserver.observe(host)
+      fitScene()
 
       let dragging = false
       let interactionEnabled = true
@@ -71,8 +121,8 @@ export default function TrainPixiPrototype() {
         bag.cursor = 'grab'
         bag.visible = true
         bag.position.set(trainPixiScene.bag.startPosition.x, trainPixiScene.bag.startPosition.y)
-        before.alpha = 1
-        after.alpha = 0
+        standingNpc.alpha = 1
+        seatedNpc.alpha = 0
       }
       const crossfade = () => {
         interactionEnabled = false
@@ -80,8 +130,8 @@ export default function TrainPixiPrototype() {
         const startedAt = performance.now()
         const draw = (now: number) => {
           const progress = Math.min((now - startedAt) / trainPixiScene.successTransition.crossfadeMs, 1)
-          before.alpha = 1 - progress
-          after.alpha = progress
+          standingNpc.alpha = 1 - progress
+          seatedNpc.alpha = progress
           if (progress < 1 && !disposed) animationFrame = requestAnimationFrame(draw)
         }
         animationFrame = requestAnimationFrame(draw)
@@ -126,6 +176,7 @@ export default function TrainPixiPrototype() {
 
     return () => {
       disposed = true
+      resizeObserver?.disconnect()
       window.clearTimeout(settleTimer)
       if (animationFrame !== undefined) cancelAnimationFrame(animationFrame)
       showStateRef.current = () => undefined

@@ -18,8 +18,10 @@ describe('train Pixi prototype coordinates', () => {
   it('keeps all layered artwork in one scene configuration', () => {
     expect(TRAIN_STAGE).toEqual({ width: 1024, height: 1536 })
     expect(trainPixiScene.assets).toEqual({
-      beforeBackground: '/prototypes/train-pixi/before.svg',
-      afterBackground: '/prototypes/train-pixi/after.svg',
+      background: '/prototypes/train-pixi/background.svg',
+      player: '/prototypes/train-pixi/player.svg',
+      npcStanding: '/prototypes/train-pixi/npc-standing.svg',
+      npcSeated: '/prototypes/train-pixi/npc-seated.svg',
       bagSprite: '/prototypes/train-pixi/bag.svg',
     })
     expect(trainPixiScene.successTransition.settleMs).toBeGreaterThanOrEqual(100)
