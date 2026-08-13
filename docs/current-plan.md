@@ -6,79 +6,70 @@
 
 ## 現在地
 
-電車ステージの操作感とBefore / Afterを改善する過程で、次の方式を検証しました。
+Androidスマホだけで継続できるアート / 描画方式の次の技術検証として、電車ステージの **PixiJS Prototype v1** を専用ページ `/prototypes/train-pixi-v1` に実装しました。本番ゲームの画面、進行、採点、問題データには接続していません。
 
-- 1枚PNG + CSSオーバーレイ: パッチ感、位置ズレが大きく不採用
-- AIでPNGをレイヤー分解: 背景混入、幽霊化、APIコストが大きく不採用
-- Codexが直接SVG作画: 構造上は有望だが、人物アート品質が本番水準に届かず、作画手段としては保留
+Prototype v1で確認できるもの:
 
-現在は、ゲーム構造とアート制作を分離し、Riveを使った2Dリグ方式を次の本命候補として検証する方針です。
+- PixiJS内部は `1024 × 1536` の共通座標で固定し、表示だけを端末幅へ縮小する。
+- 既存の電車PNGを薄い参考背景として再利用し、バッグ、ドロップ先、Afterの乗客はPixiJSの仮図形として独立させる。
+- バッグをドラッグし、指定位置へドロップするとBeforeからAfterへ切り替わる。
+- Before / Afterボタンとリセットボタンでも状態を確認でき、状態説明をテキストでも通知する。
+- PixiJSは専用URLを開いたときだけ遅延ロードし、本番ゲームの初期バンドルから分離する。
+- Image API、外部有料素材、PC専用Editorは使用していない。
 
-Rive Player最小実験のリポジトリ側の準備として、Player 1体のRig階層、`standing` / `seated`の状態契約、アート品質ゲート、確認物、無料 / 有料の停止境界を [`docs/design/rive-player-experiment-spec.md`](./design/rive-player-experiment-spec.md) に定義しました。本番コードや依存パッケージにはまだ接続していません。
+Android実機で判明した縮小表示とシーン右下の見切れは、Prototype専用のviewport設定、解像度とCSS表示倍率の分離、単一scene containerへの集約で修正しました。背景をcover/cropせず、`1024 × 1536`全体を常に`2:3`で表示します。`?debug=1`を付けると、scene / background / player / npc / bag / dropZoneの共通座標boundsを一時表示できます。ドラッグ判定とAfter遷移は変更していません。
+
+これはゲーム構造とAndroid幅でのRuntime表示を0円で判断するための仮素材です。人物のアート品質を合格とするものではありません。
 
 ## 決定済みの原則
 
+- GitHubを唯一の正本にし、PR → CI → Preview → Android確認 → mergeの順を守る。
+- PC専用GUIを本番制作パイプラインの必須工程にしない。
 - 1枚絵を後からゲーム用パーツへ無理に分解しない。
 - 背景、キャラクター、操作物は最初から独立して動かせる構造にする。
-- ゲームロジックはReact、アート・リグ・ポーズ・アニメーションはRiveへ分離する方向を優先する。
-- アート品質を合格させる前にゲームへ組み込まない。
-- Image APIの試行錯誤を前提にしない。APIを使う場合もコストと品質ゲートを先に設計する。
-- GitHubを唯一の正本にし、ユーザーがChatGPTとCodexの間でログを運ぶ運用を減らす。
+- アート品質とゲーム構造を別々に判定し、仮素材の構造テストだけで本番採用しない。
+- Image APIの反復実行を前提にしない。
+- Prototypeの合格前に本番ゲーム、採点、他ステージへ組み込まない。
 
 ## 次のタスク
 
-### Rive最小実験: Player 1体
+### PixiJS Prototype v1のAndroid Preview判定
 
-詳細タスク: [`docs/tasks/rive-player-minimal-experiment.md`](./tasks/rive-player-minimal-experiment.md)
+PRのCloudflare PreviewをAndroidで開き、`/prototypes/train-pixi-v1` を確認します。
 
-目的:
-Riveを本格導入する前に、「本番に使いたい品質のPlayer 1体を作り、同一キャラクターのまま自然に立つ / 座るを表現できるか」を最小コストで検証する。
+確認項目:
 
-まだ電車ステージ全体はRive化しない。
+- 320〜480px程度の縦長画面で、キャンバス全体が横にはみ出さず表示される。
+- 320×700、360×800、430×900相当の各viewportで、同じ`2:3`構図とシーン全体が維持される。
+- BeforeでPlayer、NPC、バッグ、移動先が同時に表示される。
+- `?debug=1`で主要boundsが`1024 × 1536`内に収まることを確認できる。
+- バッグが指の移動へ追従し、ページスクロールと競合しない。
+- 指をドロップ先で離すとAfterへ切り替わり、外で離すと元へ戻る。
+- Before / After / やり直すの各ボタンが44px以上で押せる。
+- 既存PNGを背景参照にしつつ、操作物を独立オブジェクトとして扱う方式に位置ズレや違和感がないか判断できる。
+- Android端末で描画速度、初期表示時間、メモリ使用に明らかな問題がない。
 
-次の実作業は、Rive Editorの無料範囲で基準アートを1体作り、仕様書の品質ゲートを通した後、同一リグから`standing` / `seated`を作ることです。Editorを直接操作できるユーザーが [`docs/design/rive-player-experiment-spec.md`](./design/rive-player-experiment-spec.md) の名前と階層に従い、並列静止画と状態遷移のPreviewを確認物として残します。支払い、trial、upgradeが求められた場合は操作せず停止します。
+判定後の分岐:
 
-現時点ではアートと`.riv`が未作成のため、アート品質および同一人物性の受け入れ条件は未判定です。コードテストだけで完了扱いにはしません。
-
-受け入れ条件:
-
-- Playerの基準アートが、既存SVGプロトタイプより明確に高品質である。
-- 頭・首・胴・左右の腕・左右の脚・靴の人体構造が自然。
-- standing と seated が同一人物に見える。
-- Rive上で将来 `standing` / `seated` を状態として扱える設計が確認できる。
-- React側では身体パーツ座標を直接制御しない方針を維持できる。
-- 本番ゲーム、採点、他ステージは変更しない。
-- まず無料範囲で検証し、有料契約が必要になる前にユーザーへ確認する。
+- **構造・操作がOK**: 別PRでアート制作方法とレイヤー仕様を定義する。まだ本番統合はしない。
+- **操作がNG**: 指追従、ドロップ領域、表示倍率だけをPrototypeで修正する。
+- **Runtime負荷がNG**: Canvas 2D / SVG方式と同条件で比較し、PixiJS採用を保留する。
+- **仮素材では判断不能**: 無料かつAndroid-only運用可能な素材作成経路を先に検証する。
 
 ## このタスクではまだやらないこと
 
-- 電車ステージ全体のRive化
-- バッグのドラッグ実装
-- NPCの本実装
-- 他ステージへの展開
+- PixiJS Prototypeの本番ゲームへの統合
+- 本番用キャラクター / 背景アートの採用
+- 採点、問題データ、他ステージの変更
+- Rive Editorを必須にする制作工程
+- Image APIの呼び出し
 - mainへの自動マージ
-- 画像生成APIの反復実行
 
-## Rive導入後に想定する責務
+## 完了したこと
 
-React:
-- ゲーム進行
-- ドラッグ判定
-- スコア / 行動ID
-- Rive State Machineへの意味的な入力
-
-Rive:
-- Player / NPCの見た目
-- リグ
-- standing / seatedなどのポーズ
-- バッグなどのゲーム内アート
-- 状態間の自然なアニメーション
-
-GitHub:
-- `.riv`を含む採用アセット
-- Rive入力名 / 状態名の仕様
-- Reactとの契約
-- PRとCI結果
+- Rive Player最小実験の契約と品質ゲートを文書化した。ただしPC専用Editorを必須にしない方針へ移行したため、Rive制作は現在の次タスクではない。
+- Androidスマホだけで開発を継続する正式アーキテクチャを [`docs/android-only-development-architecture.md`](./android-only-development-architecture.md) に定義した。
+- PixiJS Prototype v1で、共通座標、バッグドラッグ、Before / After、レスポンシブ表示を本番から分離して実装した。
 
 ## 完了時の更新ルール
 
