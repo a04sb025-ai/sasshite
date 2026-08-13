@@ -6,6 +6,23 @@
 
 ## 現在地
 
+Layered Art + PixiJS Prototype v1を実装し、ローカル検査に加えてAndroid実機でバッグのタッチ・ドラッグ・ドロップが正常に動作することを確認しました。
+
+- Before / Afterを別々の背景Spriteとして読み込む。
+- バッグを独立した透過Spriteとして表示し、指でドラッグする。
+- `1024 × 1536`、アセットパス、バッグ座標、drop zone、settle / crossfade時間をscene configへ集約する。
+- 正解時は150ms settle後、260ms crossfadeでAfterへ移る。
+- resetでBefore背景、バッグ位置、操作状態を復元する。
+- 人物は仮SVGアセット内に描き、PixiJS Graphicsでは生成しない。
+- 本番ゲーム、採点、問題データへは接続していない。
+- Image APIは呼び出していない。
+- Android縦画面向けに表示枠を4:5にし、PixiJSの`sceneRoot`全体のboundsから単一のscale + translateを計算するcamera fitを実装した。Player、NPC、Bag、座席、dropZoneを同じ構図内に収め、`?debug=1`ではscene boundsとviewport枠を表示・ログ出力できる。
+- バッグのpointer座標を、バッグとdropZoneが所属する`sceneRoot`のlocal座標へ統一した。pointerdown時の掴み位置offsetを保持するため、camera scale、CSS縮小、DPRに依存せずバッグが指へ追従する。
+- Android実機で、タッチ時にジャンプしないこと、掴んだ位置とのoffsetを保って追従すること、表示中のdropZoneで成功判定できること、Before→操作→Afterが成立することを確認済み。この座標変換・grab offset・ドラッグ・ドロップ判定を今後の正常動作する基準とし、アート、レスポンシブ表示、演出、Before / Afterを変更しても退行させない。
+- 仮素材のまま、バッグの移動先をLAP（Playerの膝）とFLOOR（足元）の2種類へ拡張した。大きな正解ガイドは表示せず、どちらも隣席が空いてNPCが座るAfterへ進む。LAPは`consideration: 2`、FLOORは`consideration: 1`として結果文とともにscene configへ保持し、将来の`afterLap` / `afterFloor`画像差し替え口も分離した。
+
+次の判定はAndroid Preview上で、LAP / FLOORの両方へ自然に運べること、各結果文、NPC着席、背景切替時のサイズ・座標・倍率不変、resetを確認することです。確認済みのドラッグ処理そのものは、明確な不具合がない限り変更しません。
+
 Androidスマホ上で **PixiJS Prototype v1** を実機確認し、次を確認できました。
 
 - `1024 × 1536` の共通論理座標をAndroid画面へ縮小表示できる。
@@ -37,10 +54,11 @@ Androidスマホ上で **PixiJS Prototype v1** を実機確認し、次を確認
 - 操作対象は最初から独立アセットとして設計する。
 - Image APIを反復試行の主工程にしない。
 - Prototypeの合格前に本番ゲーム、採点、他ステージへ組み込まない。
+- 現在の`sceneRoot` local座標変換、grab offset保持、バッグ移動、同一座標系でのdrop判定を操作系の回帰基準とする。今後の見た目・viewport・演出変更ではこの処理を原則変更せず、既存の座標・drag regression testを必須で通す。
 
 ## 次のタスク
 
-### Layered Art + PixiJS Prototype v1
+### LAP / FLOOR 1プレイ Android確認
 
 Codexは最初に以下を読んでください。
 
@@ -51,17 +69,15 @@ Codexは最初に以下を読んでください。
 - `docs/tasks/train-layered-art-pixi-v1.md`
 - 現在の `/prototypes/train-pixi-v1` 関連実装
 
-今回の実装目的は、**本番アートをまだ生成せずに**、次の最終構造をPixiJS Prototypeへ組み込むことです。
+PRのCloudflare PreviewをAndroidで開き、今回組み込んだ最終構造候補を実機確認します。
 
-- Beforeを1枚のbackground Spriteとして扱う。
-- Afterを1枚のbackground Spriteとして扱う。
-- Bagだけを独立Spriteとして扱う。
-- 主要座標・アセット・drop zoneをscene configへまとめる。
-- 正解時は短いsettle後、Before→Afterをcrossfadeする。
-- resetでBeforeへ戻る。
-- 人物をPixiJS Graphicsで描画しない。
-- 1024×1536を唯一の論理座標とする。
-- Android Previewで操作する。
+- Before背景と独立Bagが自然に表示されるか。
+- Bagが確認済みの指追従を維持し、膝と足元の両方で別々に判定されるか。
+- 大きな正解ガイドなしでも、情景から2つの置き場所を選べるか。
+- LAP / FLOORそれぞれの短い結果文が表示され、NPCが着席するか。
+- 150ms settle後のBefore→After crossfadeが自然か。
+- 切替時にCanvasサイズ・座標・表示倍率が変わらないか。
+- resetでBeforeとバッグ初期位置へ戻るか。
 
 この段階では既存画像または無料の仮素材を使い、**Image APIは0回**とします。
 
@@ -100,6 +116,11 @@ Before合格後:
 - mainへの自動マージ
 
 ## 完了したこと
+
+- Layered Art + PixiJS Prototype v1で、Before / After背景Sprite、独立Bag Sprite、scene config、settle + crossfade、resetを実装した（Android Preview確認待ち）。
+- 仮素材はローカルSVGのみで用意し、Image APIを呼び出さず、人物のPixiJS Graphics描画を削除した。
+- Layered Art版のバッグ操作について、Android実機で座標変換、grab offset、指追従、drop判定、Before→After遷移が正常に動作することを確認し、今後の回帰基準として固定した。
+- 電車PrototypeをLAP / FLOORの2結果へ拡張し、技術検証用の手動Before / After UIと大きなdrop guideを外して、Before→操作→変化→短い結果表示の1プレイ構造にした（Android確認待ち）。
 
 - Rive Player最小実験の契約と品質ゲートを文書化したが、PC専用Editorを標準工程にしない方針へ移行した。
 - Androidスマホだけで開発を継続する正式アーキテクチャを [`docs/android-only-development-architecture.md`](./android-only-development-architecture.md) に定義した。

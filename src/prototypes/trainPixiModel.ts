@@ -1,9 +1,29 @@
-export const TRAIN_STAGE = { width: 1024, height: 1536 } as const
+import { trainPixiScene } from './trainPixiScene'
 
-export type TrainPrototypeState = 'before' | 'after'
+export const TRAIN_STAGE = trainPixiScene.canvas
+export type TrainPrototypeState = 'before' | 'settling' | 'after'
+export const BAG_START = trainPixiScene.bag.startPosition
+export type TrainOutcome = typeof trainPixiScene.dropZones[number]['id']
+export const BAG_TARGET = trainPixiScene.dropZones[1]
 
-export const BAG_START = { x: 670, y: 900 } as const
-export const BAG_TARGET = { x: 350, y: 1080, radius: 170 } as const
+export interface Point {
+  x: number
+  y: number
+}
+
+export function grabOffset(pointerPosition: Point, bagPosition: Point): Point {
+  return {
+    x: pointerPosition.x - bagPosition.x,
+    y: pointerPosition.y - bagPosition.y,
+  }
+}
+
+export function draggedBagPosition(pointerPosition: Point, offset: Point): Point {
+  return {
+    x: pointerPosition.x - offset.x,
+    y: pointerPosition.y - offset.y,
+  }
+}
 
 export function stagePoint(
   clientX: number,
@@ -16,6 +36,14 @@ export function stagePoint(
   }
 }
 
+export function dropOutcomeAt(x: number, y: number): TrainOutcome | null {
+  return trainPixiScene.dropZones.find(zone => Math.hypot(x - zone.x, y - zone.y) <= zone.radius)?.id ?? null
+}
+
+export function beginDropTransition(outcome: TrainOutcome) {
+  return { state: 'settling' as const, outcome }
+}
+
 export function isBagInTarget(x: number, y: number) {
-  return Math.hypot(x - BAG_TARGET.x, y - BAG_TARGET.y) <= BAG_TARGET.radius
+  return dropOutcomeAt(x, y) !== null
 }
