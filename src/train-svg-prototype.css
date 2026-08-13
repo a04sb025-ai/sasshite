@@ -1,0 +1,69 @@
+.train-svg-prototype {
+  width: min(100%, 480px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 10px;
+  background: #eee8dc;
+}
+
+.train-svg-prototype__header {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #625d54;
+  font: 10px/1.2 sans-serif;
+  letter-spacing: .1em;
+}
+
+.train-svg-prototype__header strong { color: #3f3b35; font-size: 12px; }
+
+.train-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 2px solid #4d4a43;
+  border-radius: 12px;
+  background: #f4ead6;
+  box-shadow: 3px 4px 0 #c8bfaf;
+}
+
+.train-svg__npc,
+.train-svg__bag { transition: transform 260ms ease; }
+
+.train-svg__bag {
+  cursor: grab;
+  pointer-events: bounding-box;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.train-svg__bag:focus { outline: none; }
+
+.train-svg-prototype__controls {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding-top: 10px;
+}
+
+.train-svg-prototype__controls button {
+  min-height: 44px;
+  padding: 6px 3px;
+  border: 1px solid #625d54;
+  border-radius: 7px;
+  background: #fffaf0;
+  font: 10px/1.2 sans-serif;
+}
+
+.train-svg-prototype__controls button[aria-pressed="true"] {
+  background: #dc762f;
+  color: #fff;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .train-svg__npc,
+  .train-svg__bag { transition: none; }
+}
