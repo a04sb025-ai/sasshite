@@ -1,0 +1,5 @@
+Create an in-place edit on the first supplied image, which is the locked clean background plate. The second supplied image is the master identity, scale, clothing, and standing-position reference.
+
+Add only that exact standing NPC, now naturally seated in the empty seat immediately to the right of the player position. Keep the same face, hair, proportions, height/scale, beige overshirt, cream shirt, dark trousers, brown shoes, shoulder bag, palette, outlines, and simple rendering. Match the locked plate's camera and perspective exactly. Hips must contact the seat cushion, back must align naturally with the backrest, and both feet must meet the floor plane. Do not add the player or brown seat bag.
+
+Return a full opaque 1024x1536 composite. Do not alter any background pixel outside the newly seated NPC and its necessary contact shadow. Do not redraw, shift, crop, or reframe the train interior.
