@@ -15,12 +15,6 @@ REGIONS = {
     "bag": (350, 850, 660, 1070),
     "npc-seated": (330, 430, 690, 1290),
 }
-ANCHORS = {
-    "player-seated": (205, 700),
-    "npc-standing": (805, 650),
-    "bag": (510, 950),
-    "npc-seated": (525, 650),
-}
 
 
 def opened(path: Path) -> Image.Image:
@@ -30,87 +24,14 @@ def opened(path: Path) -> Image.Image:
     return image
 
 
-def _fill_holes(mask: Image.Image) -> Image.Image:
-    inverse = ImageChops.invert(mask)
-    outside = Image.new("L", SIZE)
-    pending = [(0, 0)]
-    pixels, inv, seen = outside.load(), inverse.load(), set()
-    while pending:
-        x, y = pending.pop()
-        if (x, y) in seen or not (0 <= x < SIZE[0] and 0 <= y < SIZE[1]) or inv[x, y] == 0:
-            continue
-        seen.add((x, y))
-        pixels[x, y] = 255
-        pending.extend(((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)))
-    return ImageChops.invert(outside)
-
-
-def _keep_subject_component(mask: Image.Image, anchor: tuple[int, int]) -> Image.Image:
-    source = mask.load()
-    visited: set[tuple[int, int]] = set()
-    components: list[list[tuple[int, int]]] = []
-    left, top, right, bottom = mask.getbbox() or (0, 0, 0, 0)
-    for y in range(top, bottom):
-        for x in range(left, right):
-            if source[x, y] == 0 or (x, y) in visited:
-                continue
-            component, pending = [], [(x, y)]
-            while pending:
-                point = pending.pop()
-                px, py = point
-                if point in visited or not (left <= px < right and top <= py < bottom) or source[px, py] == 0:
-                    continue
-                visited.add(point)
-                component.append(point)
-                pending.extend(((px - 1, py), (px + 1, py), (px, py - 1), (px, py + 1)))
-            if len(component) >= 300:
-                components.append(component)
-    if not components:
-        raise SystemExit(f"No subject mask component near {anchor}")
-    # A known point inside each subject chooses the target itself, rather than every
-    # changed background patch in the ROI. Nearest-point scoring tolerates edit drift.
-    selected = min(
-        components,
-        key=lambda points: min((px - anchor[0]) ** 2 + (py - anchor[1]) ** 2 for px, py in points),
-    )
-    result = Image.new("L", SIZE)
-    output = result.load()
-    for px, py in selected:
-        output[px, py] = 255
-    return result
-
-
-def subject_mask(
-    subject: Image.Image,
-    plate: Image.Image,
-    region: tuple[int, int, int, int],
-    anchor: tuple[int, int],
-) -> Image.Image:
-    """Create a hard subject mask; RGB difference is only a segmentation seed, never alpha."""
-    difference = ImageChops.difference(subject.convert("RGB"), plate.convert("RGB"))
-    # max(R,G,B) retains flat character fills that luminance conversion can understate.
-    channels = difference.split()
-    maximum = ImageChops.lighter(ImageChops.lighter(channels[0], channels[1]), channels[2])
-    mask = maximum.point(lambda value: 255 if value >= 42 else 0)
+def difference_layer(subject: Image.Image, plate: Image.Image, region: tuple[int, int, int, int]) -> Image.Image:
+    """Keep source pixels whose RGB differs from the clean plate inside a known scene ROI."""
+    delta = ImageChops.difference(subject.convert("RGB"), plate.convert("RGB")).convert("L")
+    # Ignore small plate-generation noise, then lightly feather the cut edge.
+    alpha = delta.point(lambda value: 0 if value < 24 else min(255, (value - 24) * 7))
     roi = Image.new("L", SIZE)
     roi.paste(255, region)
-    mask = ImageChops.multiply(mask, roi)
-    # Close small gaps, remove plate-noise islands, then make every enclosed subject pixel opaque.
-    mask = mask.filter(ImageFilter.MaxFilter(9)).filter(ImageFilter.MinFilter(7))
-    mask = _fill_holes(_keep_subject_component(mask, anchor))
-    # Preserve a hard 255 interior; only a one-pixel exterior antialias fringe may be translucent.
-    fringe = ImageChops.subtract(mask.filter(ImageFilter.MaxFilter(3)), mask)
-    fringe = fringe.point(lambda value: 128 if value else 0)
-    return ImageChops.lighter(mask, fringe)
-
-
-def masked_layer(
-    subject: Image.Image,
-    plate: Image.Image,
-    region: tuple[int, int, int, int],
-    anchor: tuple[int, int],
-) -> Image.Image:
-    alpha = subject_mask(subject, plate, region, anchor)
+    alpha = ImageChops.multiply(alpha, roi).filter(ImageFilter.GaussianBlur(0.6))
     layer = subject.copy()
     layer.putalpha(alpha)
     return layer
@@ -123,15 +44,13 @@ def overlay(*images: Image.Image) -> Image.Image:
     return result
 
 
-def transformed(layer: Image.Image, center: tuple[int, int], scale: float) -> Image.Image:
+def moved(layer: Image.Image, center: tuple[int, int]) -> Image.Image:
     bbox = layer.getchannel("A").getbbox()
     if bbox is None:
         raise SystemExit("Bag extraction has no visible pixels")
     current = ((bbox[0] + bbox[2]) // 2, (bbox[1] + bbox[3]) // 2)
-    crop = layer.crop(bbox)
-    crop = crop.resize((round(crop.width * scale), round(crop.height * scale)), Image.Resampling.LANCZOS)
     translated = Image.new("RGBA", SIZE)
-    translated.alpha_composite(crop, (center[0] - crop.width // 2, center[1] - crop.height // 2))
+    translated.alpha_composite(layer, (center[0] - current[0], center[1] - current[1]))
     return translated
 
 
@@ -149,11 +68,11 @@ def main() -> None:
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
     layers = {
-        name: masked_layer(master, background, REGIONS[name], ANCHORS[name])
+        name: difference_layer(master, background, REGIONS[name])
         for name in ("player-seated", "npc-standing", "bag")
     }
-    layers["npc-seated"] = masked_layer(
-        seated_composite, background, REGIONS["npc-seated"], ANCHORS["npc-seated"]
+    layers["npc-seated"] = difference_layer(
+        seated_composite, background, REGIONS["npc-seated"]
     )
 
     background.convert("RGB").save(args.out_dir / "train-background.png")
@@ -164,8 +83,8 @@ def main() -> None:
     after = overlay(background, layers["player-seated"], layers["npc-seated"])
     before.save(args.out_dir / "train-preview-before.png")
     after.save(args.out_dir / "train-preview-after-seated.png")
-    overlay(after, transformed(layers["bag"], (270, 905), 0.72)).save(args.out_dir / "train-preview-after-lap.png")
-    overlay(after, transformed(layers["bag"], (510, 1260), 0.82)).save(args.out_dir / "train-preview-after-floor.png")
+    overlay(after, moved(layers["bag"], (285, 910))).save(args.out_dir / "train-preview-after-lap.png")
+    overlay(after, moved(layers["bag"], (510, 1270))).save(args.out_dir / "train-preview-after-floor.png")
 
     diff = ImageChops.difference(master.convert("RGB"), before.convert("RGB"))
     diff.save(args.out_dir / "train-preview-diff.png")
@@ -178,14 +97,6 @@ def main() -> None:
             if image.size != SIZE:
                 raise SystemExit(f"Unexpected output size: {path}: {image.size}")
             print(f"{path}: mode={image.mode}, size={image.size}")
-            if path.stem in {"train-player-seated", "train-npc-standing", "train-npc-seated", "train-bag"}:
-                counts = image.convert("RGBA").getchannel("A").histogram()
-                transparent, opaque, intermediate = counts[0], counts[255], sum(counts[1:255])
-                visible = opaque + intermediate
-                ratio = intermediate / visible if visible else 1.0
-                print(f"  alpha: zero={transparent}, opaque={opaque}, intermediate={intermediate} ({ratio:.3%} visible)")
-                if ratio > 0.05:
-                    print(f"::warning file={path}::Intermediate alpha exceeds 5% of visible pixels")
 
 
 if __name__ == "__main__":
