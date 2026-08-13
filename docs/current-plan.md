@@ -6,6 +6,19 @@
 
 ## 現在地
 
+Layered Art + PixiJS Prototype v1を実装し、ローカルのtypecheck・test・buildで構造を確認しました。Android Previewでの実機確認はPR作成後の次の品質ゲートです。
+
+- Before / Afterを別々の背景Spriteとして読み込む。
+- バッグを独立した透過Spriteとして表示し、指でドラッグする。
+- `1024 × 1536`、アセットパス、バッグ座標、drop zone、settle / crossfade時間をscene configへ集約する。
+- 正解時は150ms settle後、260ms crossfadeでAfterへ移る。
+- resetでBefore背景、バッグ位置、操作状態を復元する。
+- 人物は仮SVGアセット内に描き、PixiJS Graphicsでは生成しない。
+- 本番ゲーム、採点、問題データへは接続していない。
+- Image APIは呼び出していない。
+
+次の判定はAndroid Preview上で、表示の自然さ、指追従、背景切替時のサイズ・座標・倍率不変、resetを確認することです。
+
 Androidスマホ上で **PixiJS Prototype v1** を実機確認し、次を確認できました。
 
 - `1024 × 1536` の共通論理座標をAndroid画面へ縮小表示できる。
@@ -40,7 +53,7 @@ Androidスマホ上で **PixiJS Prototype v1** を実機確認し、次を確認
 
 ## 次のタスク
 
-### Layered Art + PixiJS Prototype v1
+### Layered Art + PixiJS Prototype v1 Android確認
 
 Codexは最初に以下を読んでください。
 
@@ -51,17 +64,13 @@ Codexは最初に以下を読んでください。
 - `docs/tasks/train-layered-art-pixi-v1.md`
 - 現在の `/prototypes/train-pixi-v1` 関連実装
 
-今回の実装目的は、**本番アートをまだ生成せずに**、次の最終構造をPixiJS Prototypeへ組み込むことです。
+PRのCloudflare PreviewをAndroidで開き、今回組み込んだ最終構造候補を実機確認します。
 
-- Beforeを1枚のbackground Spriteとして扱う。
-- Afterを1枚のbackground Spriteとして扱う。
-- Bagだけを独立Spriteとして扱う。
-- 主要座標・アセット・drop zoneをscene configへまとめる。
-- 正解時は短いsettle後、Before→Afterをcrossfadeする。
-- resetでBeforeへ戻る。
-- 人物をPixiJS Graphicsで描画しない。
-- 1024×1536を唯一の論理座標とする。
-- Android Previewで操作する。
+- Before背景と独立Bagが自然に表示されるか。
+- Bagが指へ追従し、床への正解ドロップが成立するか。
+- 150ms settle後のBefore→After crossfadeが自然か。
+- 切替時にCanvasサイズ・座標・表示倍率が変わらないか。
+- resetでBeforeとバッグ初期位置へ戻るか。
 
 この段階では既存画像または無料の仮素材を使い、**Image APIは0回**とします。
 
@@ -100,6 +109,9 @@ Before合格後:
 - mainへの自動マージ
 
 ## 完了したこと
+
+- Layered Art + PixiJS Prototype v1で、Before / After背景Sprite、独立Bag Sprite、scene config、settle + crossfade、resetを実装した（Android Preview確認待ち）。
+- 仮素材はローカルSVGのみで用意し、Image APIを呼び出さず、人物のPixiJS Graphics描画を削除した。
 
 - Rive Player最小実験の契約と品質ゲートを文書化したが、PC専用Editorを標準工程にしない方針へ移行した。
 - Androidスマホだけで開発を継続する正式アーキテクチャを [`docs/android-only-development-architecture.md`](./android-only-development-architecture.md) に定義した。

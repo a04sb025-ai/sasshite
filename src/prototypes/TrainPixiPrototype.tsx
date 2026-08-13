@@ -1,18 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { Application, Assets, Container, Graphics, Sprite, Text, TextStyle } from 'pixi.js'
-import { BAG_START, BAG_TARGET, isBagInTarget, stagePoint, TRAIN_STAGE, type TrainPrototypeState } from './trainPixiModel'
-
-const textStyle = new TextStyle({
-  fontFamily: 'sans-serif',
-  fontSize: 28,
-  fill: '#292923',
-  fontWeight: '600',
-})
+import { Application, Assets, Sprite } from 'pixi.js'
+import { isBagInTarget, stagePoint, TRAIN_STAGE, type TrainPrototypeState } from './trainPixiModel'
+import { trainPixiScene } from './trainPixiScene'
 
 export default function TrainPixiPrototype() {
   const hostRef = useRef<HTMLDivElement>(null)
-  const setPoseRef = useRef<(state: TrainPrototypeState) => void>(() => undefined)
-  const resetBagRef = useRef<() => void>(() => undefined)
+  const showStateRef = useRef<(state: TrainPrototypeState) => void>(() => undefined)
+  const resetSceneRef = useRef<() => void>(() => undefined)
   const [state, setState] = useState<TrainPrototypeState>('before')
 
   useEffect(() => {
@@ -20,13 +14,15 @@ export default function TrainPixiPrototype() {
     if (!host) return
     let disposed = false
     let initialized = false
+    let settleTimer: number | undefined
+    let animationFrame: number | undefined
     const app = new Application()
 
     void (async () => {
       await app.init({
         width: TRAIN_STAGE.width,
         height: TRAIN_STAGE.height,
-        background: '#d8d2c5',
+        background: '#eee9df',
         antialias: true,
         autoDensity: true,
         resolution: Math.min(window.devicePixelRatio, 2),
@@ -37,57 +33,65 @@ export default function TrainPixiPrototype() {
       app.canvas.setAttribute('aria-hidden', 'true')
       host.appendChild(app.canvas)
 
-      const texture = await Assets.load('/scene-art/train.png')
+      const [beforeTexture, afterTexture, bagTexture] = await Promise.all([
+        Assets.load(trainPixiScene.assets.beforeBackground),
+        Assets.load(trainPixiScene.assets.afterBackground),
+        Assets.load(trainPixiScene.assets.bagSprite),
+      ])
       if (disposed) return
-      const background = new Sprite(texture)
-      background.width = TRAIN_STAGE.width
-      background.height = TRAIN_STAGE.height
-      background.alpha = 0.46
-      app.stage.addChild(background)
 
-      const wash = new Graphics().rect(0, 0, TRAIN_STAGE.width, TRAIN_STAGE.height).fill({ color: '#f8f3e7', alpha: 0.2 })
-      app.stage.addChild(wash)
+      const before = new Sprite(beforeTexture)
+      const after = new Sprite(afterTexture)
+      for (const background of [before, after]) {
+        background.width = TRAIN_STAGE.width
+        background.height = TRAIN_STAGE.height
+      }
+      after.alpha = 0
+      app.stage.addChild(before, after)
 
-      const target = new Graphics()
-        .roundRect(BAG_TARGET.x - 150, BAG_TARGET.y - 120, 300, 240, 46)
-        .fill({ color: '#fff8df', alpha: 0.72 })
-        .stroke({ color: '#8d7657', width: 8, alpha: 0.9 })
-      app.stage.addChild(target)
-
-      const targetLabel = new Text({ text: 'ここへバッグを移動', style: textStyle })
-      targetLabel.anchor.set(0.5)
-      targetLabel.position.set(BAG_TARGET.x, BAG_TARGET.y + 6)
-      app.stage.addChild(targetLabel)
-
-      const afterLayer = new Container()
-      const seatedPassenger = new Graphics()
-        .circle(700, 665, 82).fill('#edc59d').stroke({ color: '#39362f', width: 10 })
-        .roundRect(590, 740, 220, 250, 70).fill('#6d8592').stroke({ color: '#39362f', width: 10 })
-        .roundRect(700, 940, 230, 76, 38).fill('#4f5961').stroke({ color: '#39362f', width: 10 })
-      afterLayer.addChild(seatedPassenger)
-      const afterLabel = new Text({ text: 'After：乗客が座った', style: textStyle })
-      afterLabel.position.set(68, 76)
-      afterLayer.addChild(afterLabel)
-      afterLayer.visible = false
-      app.stage.addChild(afterLayer)
-
-      const beforeLabel = new Text({ text: 'Before：バッグを移動', style: textStyle })
-      beforeLabel.position.set(68, 76)
-      app.stage.addChild(beforeLabel)
-
-      const bag = new Container()
-      const bagBody = new Graphics().roundRect(-118, -82, 236, 164, 32).fill('#b45128').stroke({ color: '#332f2a', width: 10 })
-      const handle = new Graphics().roundRect(-58, -130, 116, 76, 36).stroke({ color: '#332f2a', width: 12 })
-      const bagLabel = new Text({ text: 'BAG', style: new TextStyle({ ...textStyle, fontSize: 30, fill: '#fff9ec' }) })
-      bagLabel.anchor.set(0.5)
-      bag.addChild(handle, bagBody, bagLabel)
-      bag.position.set(BAG_START.x, BAG_START.y)
+      const bag = new Sprite(bagTexture)
+      bag.anchor.set(trainPixiScene.bag.anchor.x, trainPixiScene.bag.anchor.y)
+      bag.width = trainPixiScene.bag.size.width
+      bag.height = trainPixiScene.bag.size.height
+      bag.position.set(trainPixiScene.bag.startPosition.x, trainPixiScene.bag.startPosition.y)
       bag.eventMode = 'static'
       bag.cursor = 'grab'
       app.stage.addChild(bag)
 
       let dragging = false
-      bag.on('pointerdown', () => { dragging = true; bag.cursor = 'grabbing' })
+      let interactionEnabled = true
+      const cancelTransition = () => {
+        window.clearTimeout(settleTimer)
+        if (animationFrame !== undefined) cancelAnimationFrame(animationFrame)
+      }
+      const resetScene = () => {
+        cancelTransition()
+        dragging = false
+        interactionEnabled = true
+        bag.cursor = 'grab'
+        bag.visible = true
+        bag.position.set(trainPixiScene.bag.startPosition.x, trainPixiScene.bag.startPosition.y)
+        before.alpha = 1
+        after.alpha = 0
+      }
+      const crossfade = () => {
+        interactionEnabled = false
+        bag.visible = false
+        const startedAt = performance.now()
+        const draw = (now: number) => {
+          const progress = Math.min((now - startedAt) / trainPixiScene.successTransition.crossfadeMs, 1)
+          before.alpha = 1 - progress
+          after.alpha = progress
+          if (progress < 1 && !disposed) animationFrame = requestAnimationFrame(draw)
+        }
+        animationFrame = requestAnimationFrame(draw)
+      }
+
+      bag.on('pointerdown', () => {
+        if (!interactionEnabled) return
+        dragging = true
+        bag.cursor = 'grabbing'
+      })
       app.stage.eventMode = 'static'
       app.stage.hitArea = app.screen
       app.stage.on('pointermove', event => {
@@ -99,61 +103,67 @@ export default function TrainPixiPrototype() {
         if (!dragging) return
         dragging = false
         bag.cursor = 'grab'
-        if (isBagInTarget(bag.x, bag.y)) setState('after')
-        else bag.position.set(BAG_START.x, BAG_START.y)
+        if (isBagInTarget(bag.x, bag.y)) {
+          interactionEnabled = false
+          const target = trainPixiScene.dropZones[0]
+          bag.position.set(target.x, target.y)
+          setState('settling')
+          settleTimer = window.setTimeout(() => setState('after'), trainPixiScene.successTransition.settleMs)
+        } else {
+          bag.position.set(trainPixiScene.bag.startPosition.x, trainPixiScene.bag.startPosition.y)
+        }
       }
       app.stage.on('pointerup', finishDrag)
       app.stage.on('pointerupoutside', finishDrag)
 
-      setPoseRef.current = next => {
-        const after = next === 'after'
-        afterLayer.visible = after
-        beforeLabel.visible = !after
-        target.visible = !after
-        targetLabel.visible = !after
-        bag.visible = !after
+      showStateRef.current = next => {
+        if (next === 'before') resetScene()
+        if (next === 'after') crossfade()
       }
-      resetBagRef.current = () => bag.position.set(BAG_START.x, BAG_START.y)
-      setPoseRef.current(state)
+      resetSceneRef.current = resetScene
+      resetScene()
     })()
 
     return () => {
       disposed = true
-      setPoseRef.current = () => undefined
-      resetBagRef.current = () => undefined
+      window.clearTimeout(settleTimer)
+      if (animationFrame !== undefined) cancelAnimationFrame(animationFrame)
+      showStateRef.current = () => undefined
+      resetSceneRef.current = () => undefined
       if (initialized) app.destroy(true, { children: true, texture: false })
     }
   }, [])
 
-  useEffect(() => { setPoseRef.current(state) }, [state])
+  useEffect(() => { showStateRef.current(state) }, [state])
 
   const reset = () => {
-    resetBagRef.current()
+    resetSceneRef.current()
     setState('before')
   }
 
   return <main className="train-prototype-page">
     <header className="train-prototype-header">
-      <p>PixiJS Prototype v1 · 1024 × 1536</p>
+      <p>Layered Art + PixiJS Prototype v1 · 1024 × 1536</p>
       <h1>電車ステージ技術検証</h1>
-      <p>バッグを点線の場所へドラッグしてください。</p>
+      <p>隣の席にあるバッグを床へ移動してください。</p>
     </header>
     <div
       ref={hostRef}
       className="train-pixi-host"
       onPointerDown={event => {
-        // Keep the coordinate conversion exercised at the DOM boundary as documentation for future React hit areas.
         if (hostRef.current) stagePoint(event.clientX, event.clientY, hostRef.current.getBoundingClientRect())
       }}
     />
     <p className="train-prototype-status" aria-live="polite">
-      {state === 'before' ? 'Before：バッグが隣の席にあります。' : 'After：バッグを移動し、乗客が座りました。'}
+      {state === 'before' && 'Before：バッグが隣の席にあります。'}
+      {state === 'settling' && 'バッグを移動しました…'}
+      {state === 'after' && 'After：空いた席に乗客が座りました。'}
     </p>
     <div className="train-prototype-controls" aria-label="状態確認">
-      <button type="button" onClick={() => setState('before')} aria-pressed={state === 'before'}>Before</button>
+      <button type="button" onClick={reset} aria-pressed={state === 'before'}>Before</button>
       <button type="button" onClick={() => setState('after')} aria-pressed={state === 'after'}>After</button>
       <button type="button" onClick={reset}>やり直す</button>
     </div>
-    <p className="train-prototype-note">本番ゲームとは接続していない、描画と操作だけの仮素材ページです。</p>
+    <p className="train-prototype-note">背景とバッグを独立した画像として描画する、本番ゲーム未接続の仮素材ページです。</p>
   </main>
 }

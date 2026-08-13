@@ -1,9 +1,9 @@
-export const TRAIN_STAGE = { width: 1024, height: 1536 } as const
+import { trainPixiScene } from './trainPixiScene'
 
-export type TrainPrototypeState = 'before' | 'after'
-
-export const BAG_START = { x: 670, y: 900 } as const
-export const BAG_TARGET = { x: 350, y: 1080, radius: 170 } as const
+export const TRAIN_STAGE = trainPixiScene.canvas
+export type TrainPrototypeState = 'before' | 'settling' | 'after'
+export const BAG_START = trainPixiScene.bag.startPosition
+export const BAG_TARGET = trainPixiScene.dropZones[0]
 
 export function stagePoint(
   clientX: number,
@@ -17,5 +17,5 @@ export function stagePoint(
 }
 
 export function isBagInTarget(x: number, y: number) {
-  return Math.hypot(x - BAG_TARGET.x, y - BAG_TARGET.y) <= BAG_TARGET.radius
+  return trainPixiScene.dropZones.some(zone => Math.hypot(x - zone.x, y - zone.y) <= zone.radius)
 }
