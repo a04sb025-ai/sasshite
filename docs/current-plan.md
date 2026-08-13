@@ -16,6 +16,7 @@ Layered Art + PixiJS Prototype v1を実装し、ローカルのtypecheck・test�
 - 人物は仮SVGアセット内に描き、PixiJS Graphicsでは生成しない。
 - 本番ゲーム、採点、問題データへは接続していない。
 - Image APIは呼び出していない。
+- Android縦画面向けにCanvas表示を4:5へcropし、バッグ、乗客、座席、移動先を残しながら、見出し・ゲーム本体・操作ボタンを1画面内で確認しやすい高さへ圧縮した。
 
 次の判定はAndroid Preview上で、表示の自然さ、指追従、背景切替時のサイズ・座標・倍率不変、resetを確認することです。
 

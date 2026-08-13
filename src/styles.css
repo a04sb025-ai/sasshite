@@ -162,18 +162,18 @@ button:focus-visible { outline: 3px solid #b45128; outline-offset: 3px; }
 }
 
 .train-prototype-page {
-  width: min(100%, 480px);
+  width: min(100%, 460px);
   min-height: 100dvh;
   margin: auto;
-  padding: 18px 12px 28px;
+  padding: 10px 10px 16px;
   background: #f8f3e7;
 }
-.train-prototype-header { padding: 0 4px 12px; }
-.train-prototype-header p { margin: 0 0 7px; color: #6f6a60; font-size: 12px; }
-.train-prototype-header h1 { margin: 0 0 8px; font-size: 20px; }
+.train-prototype-header { padding: 0 3px 7px; }
+.train-prototype-header p { margin: 0 0 3px; color: #6f6a60; font-size: 11px; line-height: 1.35; }
+.train-prototype-header h1 { margin: 0 0 3px; font-size: 18px; line-height: 1.25; }
 .train-pixi-host {
   width: 100%;
-  aspect-ratio: 2 / 3;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
   border: 2px solid #3e3c36;
   border-radius: 13px;
@@ -181,14 +181,24 @@ button:focus-visible { outline: 3px solid #b45128; outline-offset: 3px; }
   box-shadow: 4px 5px 0 #cfc6b5;
   touch-action: none;
 }
-.train-pixi-canvas { display: block; width: 100%; height: 100%; }
-.train-prototype-status { min-height: 42px; margin: 10px 2px 4px; font-size: 13px; }
-.train-prototype-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.train-pixi-canvas {
+  display: block;
+  width: 100%;
+  height: 120%;
+  transform: translateY(-8.333%);
+}
+.train-prototype-status { min-height: 32px; margin: 6px 2px 2px; font-size: 12px; line-height: 1.4; }
+.train-prototype-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .train-prototype-controls button {
-  min-height: 48px;
+  min-height: 40px;
+  padding: 5px 4px;
   border: 1px solid #514c43;
   border-radius: 5px;
   background: #fffaf0;
 }
 .train-prototype-controls button[aria-pressed="true"] { background: #cf6b36; color: white; }
-.train-prototype-note { margin: 16px 2px 0; color: #777167; font-size: 11px; line-height: 1.6; }
+.train-prototype-note { margin: 8px 2px 0; color: #777167; font-size: 10px; line-height: 1.4; }
+
+@media (min-width: 600px) {
+  .train-prototype-page { padding-top: 16px; }
+}
