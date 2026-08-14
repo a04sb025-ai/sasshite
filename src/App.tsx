@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useState } from 'react'
 import { GameScene } from './components/GameScene'
 import { Player } from './components/SceneArtwork'
 import { scenes } from './data/scenes'
@@ -16,6 +16,11 @@ export default function App() {
   const [records, setRecords] = useState<GameRecord[]>([])
   const [playScenes, setPlayScenes] = useState(scenes)
   const [ageModeId, setAgeModeId] = useState<AgeModeId>('working-adult')
+
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0)
+  }, [screen, index])
+
   const start = () => {
     const source = [...getAgeMode(ageModeId).scenes]
     setPlayScenes(current => createSceneOrder(source, screen === 'result' ? current.map(scene => scene.id) : []))
