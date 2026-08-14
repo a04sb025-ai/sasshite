@@ -16,7 +16,7 @@ on:
         required: false
         type: string
       auto_merge:
-        description: "Auto-merge when all safe-scope gates pass"
+        description: "Publish directly to main when all safe-scope gates pass"
         required: true
         default: false
         type: boolean
@@ -25,10 +25,12 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
+  pull-requests: read
 
+# Only one autonomous main writer may run at once. This prevents two valid
+# candidates from racing while still letting the hourly lane rotation proceed.
 concurrency:
-  group: ai-game-director-${{ github.run_id }}
+  group: ai-game-director-main-writer
   cancel-in-progress: false
 
 jobs:
@@ -81,7 +83,7 @@ jobs:
               2) LANE="CONTENT: prioritize representative safe scenarios for kindergarten, junior-high, and working-adult modes, with clear age differences. Add only a small reviewed batch." ;;
               3) LANE="UX: prioritize mobile clarity, immediate interaction feedback, comprehensible outcomes, and removal of blockers that make the prototype hard to play." ;;
             esac
-            echo "OBJECTIVE=OVERNIGHT PROTOTYPE SPRINT. $LANE Read docs/prototype-milestone.md and docs/release-readiness.md. Work on the highest-priority unmet milestone in this lane. Implement one coherent improvement and keep it safe for automatic merge." >> "$GITHUB_ENV"
+            echo "OBJECTIVE=OVERNIGHT PROTOTYPE SPRINT. $LANE Read docs/prototype-milestone.md and docs/release-readiness.md. Work on the highest-priority unmet milestone in this lane. Implement one coherent improvement and keep it safe for automatic publication to main." >> "$GITHUB_ENV"
           else
             echo "RUN_MODE=${INPUT_MODE:-analyze}" >> "$GITHUB_ENV"
             echo "AUTO_MERGE=${INPUT_AUTO_MERGE:-false}" >> "$GITHUB_ENV"
@@ -108,9 +110,6 @@ jobs:
       - name: Analyze one improvement
         if: ${{ env.RUN_MODE == 'analyze' }}
         run: |
-          # GitHub-hosted runners already provide an ephemeral VM boundary. Codex's
-          # Linux bubblewrap sandbox cannot initialize reliably here, so run Codex
-          # without its nested OS sandbox. Analysis remains instruction-only.
           codex exec --ephemeral --sandbox danger-full-access \
             --output-last-message /tmp/game-director-result.md \
             - < /tmp/game-director-prompt.md
@@ -128,9 +127,6 @@ jobs:
       - name: Implement exactly one improvement
         if: ${{ env.RUN_MODE == 'implement' }}
         run: |
-          # Avoid nested bubblewrap on the GitHub runner. Repository writes are
-          # constrained after execution by protected-path, file-count, diff,
-          # test/build, rebase, and PR/merge gates below.
           codex exec --ephemeral --sandbox danger-full-access \
             --output-last-message /tmp/game-director-result.md \
             - < /tmp/game-director-prompt.md
@@ -180,42 +176,25 @@ jobs:
           npm test
           npm run build
 
-      - name: Push candidate
-        if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES != 'true' }}
-        run: git push --set-upstream origin "$BRANCH"
-
-      - name: Open pull request
-        if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES != 'true' }}
-        run: |
-          TITLE=$(sed -n 's/^TITLE:[[:space:]]*//p' /tmp/game-director-result.md | head -n 1)
-          [ -n "$TITLE" ] || TITLE="AI Game Director autonomous improvement"
-          {
-            echo "## AI Game Director overnight sprint"
-            echo
-            echo '```text'
-            cat /tmp/game-director-result.md
-            echo '```'
-            echo
-            echo "## Independent gates"
-            echo "- one coherent lane improvement"
-            echo "- maximum 12 changed files"
-            echo "- protected/high-risk paths blocked"
-            echo "- rebased on latest main"
-            echo "- typecheck, test, build passed before and after rebase"
-            echo "- Codex nested OS sandbox disabled only inside ephemeral GitHub runner"
-          } > /tmp/pr-body.md
-          PR_URL=$(gh pr create --repo "${GITHUB_REPOSITORY}" --base main --head "$BRANCH" --title "$TITLE" --body-file /tmp/pr-body.md)
-          echo "PR_NUMBER=$(gh pr view "$PR_URL" --json number --jq .number)" >> "$GITHUB_ENV"
-
-      - name: Auto-merge safe improvement
+      - name: Publish safe improvement to main
         if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES != 'true' && env.AUTO_MERGE == 'true' }}
         run: |
-          gh pr merge "$PR_NUMBER" --repo "${GITHUB_REPOSITORY}" --squash --delete-branch
-          echo "Safe-scope autonomous improvement merged to main." >> "$GITHUB_STEP_SUMMARY"
+          # The candidate has already been rebased onto the latest main and passed
+          # all validation twice. A normal non-force push only succeeds if main is
+          # still exactly the expected ancestor; otherwise Git rejects it safely.
+          git push origin HEAD:main
+          echo "Safe-scope autonomous improvement published directly to main." >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Summarize no-change result
-        if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES == 'true' }}
+      - name: Preserve manual candidate branch
+        if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES != 'true' && env.AUTO_MERGE != 'true' }}
+        run: |
+          git push --set-upstream origin "$BRANCH"
+          echo "Auto publication was disabled; candidate branch preserved as $BRANCH." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Summarize result
+        if: ${{ always() && env.RUN_MODE == 'implement' }}
         run: |
           if [ -f /tmp/game-director-result.md ]; then
+            echo >> "$GITHUB_STEP_SUMMARY"
             cat /tmp/game-director-result.md >> "$GITHUB_STEP_SUMMARY"
           fi
