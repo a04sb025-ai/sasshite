@@ -1,0 +1,199 @@
+name: AI Game Director v1
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Run mode"
+        required: true
+        default: analyze
+        type: choice
+        options:
+          - analyze
+          - implement
+      objective:
+        description: "Optional focus for this single improvement cycle"
+        required: false
+        type: string
+      auto_merge:
+        description: "Auto-merge when all safe-scope gates pass"
+        required: true
+        default: false
+        type: boolean
+  schedule:
+    - cron: "20 3 * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ai-game-director-v1
+  cancel-in-progress: false
+
+jobs:
+  game-director:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install project dependencies
+        run: npm ci
+
+      - name: Install Codex CLI
+        run: npm install --global @openai/codex
+
+      - name: Verify required secret
+        run: |
+          if [ -z "${OPENAI_API_KEY:-}" ]; then
+            echo "OPENAI_API_KEY is required." >&2
+            exit 1
+          fi
+
+      - name: Resolve run policy
+        env:
+          INPUT_MODE: ${{ inputs.mode }}
+          INPUT_AUTO_MERGE: ${{ inputs.auto_merge }}
+          INPUT_OBJECTIVE: ${{ inputs.objective }}
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "schedule" ]; then
+            echo "RUN_MODE=implement" >> "$GITHUB_ENV"
+            echo "AUTO_MERGE=true" >> "$GITHUB_ENV"
+            echo "OBJECTIVE=Move the game toward the release-readiness criteria. Read docs/release-readiness.md, identify the highest-value unmet criterion that can be improved safely in one small cycle, and improve exactly one thing." >> "$GITHUB_ENV"
+          else
+            echo "RUN_MODE=${INPUT_MODE:-analyze}" >> "$GITHUB_ENV"
+            echo "AUTO_MERGE=${INPUT_AUTO_MERGE:-false}" >> "$GITHUB_ENV"
+            echo "OBJECTIVE=${INPUT_OBJECTIVE:-}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Capture current open PRs
+        run: |
+          gh pr list --repo "${GITHUB_REPOSITORY}" --state open --limit 30 \
+            --json number,title,headRefName,baseRefName,url,body > /tmp/open-prs.json
+
+      - name: Build Game Director prompt
+        run: |
+          cp prompts/codex/game-director-v1.md /tmp/game-director-prompt.md
+          {
+            echo
+            echo "## この実行で指定された追加目的"
+            if [ -n "${OBJECTIVE:-}" ]; then printf '%s\n' "$OBJECTIVE"; else echo "指定なし。最も小さく効果の高い改善を1件選ぶ。"; fi
+            echo
+            echo "## 現在openのPR一覧"
+            cat /tmp/open-prs.json
+          } >> /tmp/game-director-prompt.md
+
+      - name: Analyze one improvement
+        if: ${{ env.RUN_MODE == 'analyze' }}
+        run: |
+          codex exec --ephemeral --sandbox read-only --output-last-message /tmp/game-director-result.md - < /tmp/game-director-prompt.md
+          cat /tmp/game-director-result.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Prepare autonomous improvement branch
+        if: ${{ env.RUN_MODE == 'implement' }}
+        run: |
+          BRANCH="agent/auto-improve-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+
+      - name: Implement exactly one improvement
+        if: ${{ env.RUN_MODE == 'implement' }}
+        run: |
+          codex exec --ephemeral --sandbox workspace-write --output-last-message /tmp/game-director-result.md - < /tmp/game-director-prompt.md
+
+      - name: Enforce autonomous safety boundaries
+        if: ${{ env.RUN_MODE == 'implement' }}
+        run: |
+          set -euo pipefail
+          git diff --check
+          mapfile -t files < <(git diff --name-only)
+
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "NO_CHANGES=true" >> "$GITHUB_ENV"
+            echo "Codex produced no repository changes." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          if [ "${#files[@]}" -gt 8 ]; then
+            echo "Autonomous cycle exceeded 8-file limit." >&2
+            exit 1
+          fi
+
+          protected_pattern='^(\.github/workflows/|AGENTS\.md$|docs/game-vision\.md$|docs/age-modes\.md$|docs/evaluation-rubric\.md$|docs/autonomous-development\.md$|docs/release-readiness\.md$|package\.json$|package-lock\.json$|wrangler\.jsonc$|prompts/imagegen/|scripts/imagegen/|public/)'
+          for file in "${files[@]}"; do
+            if [[ "$file" =~ $protected_pattern ]]; then
+              echo "Autonomous v1 attempted to modify protected file: $file" >&2
+              exit 1
+            fi
+          done
+
+          printf '%s\n' "${files[@]}" > /tmp/changed-files.txt
+          {
+            echo "### Changed files"
+            printf -- '- `%s`\n' "${files[@]}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run independent validation
+        if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES != 'true' }}
+        run: |
+          npm run typecheck
+          npm test
+          npm run build
+
+      - name: Commit and push candidate
+        if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES != 'true' }}
+        run: |
+          git add -A
+          git commit -m "AI Game Director: autonomous improvement"
+          git push --set-upstream origin "$BRANCH"
+
+      - name: Open pull request
+        if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES != 'true' }}
+        run: |
+          TITLE=$(sed -n 's/^TITLE:[[:space:]]*//p' /tmp/game-director-result.md | head -n 1)
+          [ -n "$TITLE" ] || TITLE="AI Game Director autonomous improvement"
+          {
+            echo "## AI Game Director v1"
+            echo
+            echo '```text'
+            cat /tmp/game-director-result.md
+            echo '```'
+            echo
+            echo "## Independent gates"
+            echo "- one improvement only"
+            echo "- maximum 8 changed files"
+            echo "- protected/high-risk paths blocked"
+            echo "- typecheck, test, build passed"
+            echo "- auto-merge only when explicitly enabled or scheduled"
+          } > /tmp/pr-body.md
+          PR_URL=$(gh pr create --repo "${GITHUB_REPOSITORY}" --base main --head "$BRANCH" --title "$TITLE" --body-file /tmp/pr-body.md)
+          echo "PR_URL=$PR_URL" >> "$GITHUB_ENV"
+          PR_NUMBER=$(gh pr view "$PR_URL" --json number --jq .number)
+          echo "PR_NUMBER=$PR_NUMBER" >> "$GITHUB_ENV"
+
+      - name: Auto-merge safe improvement
+        if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES != 'true' && env.AUTO_MERGE == 'true' }}
+        run: |
+          gh pr merge "$PR_NUMBER" --repo "${GITHUB_REPOSITORY}" --squash --delete-branch
+          echo "Safe-scope autonomous improvement merged to main." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Summarize no-change result
+        if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES == 'true' }}
+        run: |
+          if [ -f /tmp/game-director-result.md ]; then cat /tmp/game-director-result.md >> "$GITHUB_STEP_SUMMARY"; fi

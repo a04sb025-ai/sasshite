@@ -36,6 +36,19 @@ PC専用GUIを必須にするアート制作ツールは標準フローに含め
 10. ユーザーはAndroidのCloudflare Previewを見て「OK / NG / 気になる点」を返す。
 11. OK後のみmainへマージする。
 
+## 自律改善のPhase 1
+
+ゲーム全体を継続改善する場合は、通常の標準フローを置き換えるのではなく、その前半を **AI Game Director v1** で自動化します。詳細は [`docs/autonomous-development.md`](./autonomous-development.md) を正本とします。
+
+GitHub Actions の `.github/workflows/ai-game-director.yml` を手動起動し、次のどちらかを選びます。
+
+- `analyze`: 最新mainとopen PRを読んで、競合しない改善候補を最大3件比較し、1件を提案する。コードは変更しない。
+- `implement`: 最新mainから専用ブランチを作り、改善を1件だけ実装する。独立したtypecheck / test / buildと安全境界を通った場合だけDraft PRを作る。
+
+Phase 1では定期実行しません。mainへのmerge、本番公開、課金・広告・ユーザーデータ・Secret・子ども向け安全設計に関わる判断は自動化しません。
+
+Draft PR作成後は通常フローへ戻り、ChatGPTが差分・CIを確認し、ユーザーがAndroid Previewで最終判断します。
+
 ## Codexへの標準依頼
 
 毎回長大な会話履歴を渡すのではなく、原則として次の形にします。
@@ -43,6 +56,8 @@ PC専用GUIを必須にするアート制作ツールは標準フローに含め
 > AGENTS.md、README.md、docs/current-plan.md、current-planから参照されている設計文書を最後まで読んでください。現在の「次のタスク」を受け入れ条件どおり実装してください。変更範囲を守り、必要なテストを実施し、current-planを更新してください。mainへは勝手にマージしないでください。
 
 個別タスクで追加条件がある場合だけ補足します。
+
+自律改善のPhase 1では、上記を手動で毎回貼る代わりに `prompts/codex/game-director-v1.md` を使います。
 
 ## PRの単位
 
@@ -54,6 +69,7 @@ PC専用GUIを必須にするアート制作ツールは標準フローに含め
 - Playerのアートプロトタイプ
 - 電車ステージのバッグドラッグ
 - アート素材更新
+- AI Game Directorによる1件の改善
 
 画像生成経路、ゲームロジック、UI改善を無関係に1PRへ混ぜません。
 
@@ -105,3 +121,4 @@ Gitの差分確認、PRの状態確認、GitHub Actionsログ確認、コード�
 - 失敗した生成物をCSSの微調整だけで延命する
 - Preview確認前にmainへマージする
 - 会話で決めた重要仕様をGitHubに残さない
+- AI Game Directorの安全境界を外してmainへ直接書き込ませる
