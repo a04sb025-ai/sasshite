@@ -57,12 +57,12 @@ describe('train Pixi prototype coordinates', () => {
     expect(BAG_START).toEqual({ x: 650, y: 1035 })
     expect(BAG_TARGET).toMatchObject({ id: 'floor', x: 365, y: 1240, radius: 160, consideration: 1 })
     expect(trainPixiScene.assets).toEqual({
-      background: '/prototypes/train-pixi/background.svg',
-      player: '/prototypes/train-pixi/player.svg',
-      npcStanding: '/prototypes/train-pixi/npc-standing.svg',
-      afterLap: '/prototypes/train-pixi/npc-seated.svg',
-      afterFloor: '/prototypes/train-pixi/npc-seated.svg',
-      bagSprite: '/prototypes/train-pixi/bag.svg',
+      background: '/prototypes/train-pixi/train-before.png',
+      player: '/prototypes/train-pixi/transparent.svg',
+      npcStanding: '/prototypes/train-pixi/transparent.svg',
+      afterLap: '/prototypes/train-pixi/train-after.png',
+      afterFloor: '/prototypes/train-pixi/train-after.png',
+      bagSprite: '/prototypes/train-pixi/train-bag.png',
     })
     expect(trainPixiScene.successTransition.settleMs).toBeGreaterThanOrEqual(100)
     expect(trainPixiScene.successTransition.settleMs).toBeLessThanOrEqual(200)
