@@ -31,4 +31,15 @@ describe('Ver.0.6 game model', () => {
       scene.actions.some(action => action.id === choice.actionId),
     ) ?? true)).toBe(true)
   })
+  it('offers multiple short kindergarten situations', () => {
+    const kindergarten = ageModes.find(mode => mode.id === 'kindergarten')
+
+    expect(kindergarten?.scenes).toHaveLength(2)
+    expect(kindergarten?.scenes.every(scene =>
+      scene.presentation !== undefined
+      && scene.presentation.situation.length <= 35
+      && scene.presentation.choices.length >= 2
+      && scene.actions.some(action => action.id === 'wait'),
+    )).toBe(true)
+  })
 })

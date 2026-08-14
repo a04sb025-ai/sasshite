@@ -8,21 +8,40 @@ export type AgeMode = {
   scenes: readonly Scene[]
 }
 
-const kindergartenScenes: Scene[] = [{
-  id: 'kindergarten-blocks', eyebrow: 'ようちえん', timeoutMs: 12_000,
-  presentation: {
-    situation: 'つみき。おともだちも みている。',
-    choices: [
-      { actionId: 'share', label: 'いっしょに つかう', symbol: '🧱🧱' },
-      { actionId: 'finish-first', label: 'もうすこし つくる', symbol: '🧱' },
+const kindergartenScenes: Scene[] = [
+  {
+    id: 'kindergarten-blocks', eyebrow: 'ようちえん', timeoutMs: 12_000,
+    presentation: {
+      situation: 'つみき。おともだちも みている。',
+      choices: [
+        { actionId: 'share', label: 'いっしょに つかう', symbol: '🧱🧱' },
+        { actionId: 'finish-first', label: 'もうすこし つくる', symbol: '🧱' },
+      ],
+    },
+    actions: [
+      { id: 'share', history: 'つみきを いっしょに つかった', reaction: 'ふたりの まちが できた。', scores: { awareness: 15, kindness: 15 } },
+      { id: 'finish-first', history: 'もうすこし つくってから わたした', reaction: 'おともだちは、となりで まった。', scores: { assertiveness: 10, awareness: 5 } },
+      { id: 'wait', history: 'つみきを もったまま まった', reaction: 'ふたりで つみきを みていた。', scores: { hesitation: 7 } },
     ],
   },
-  actions: [
-    { id: 'share', history: 'つみきを いっしょに つかった', reaction: 'ふたりの まちが できた。', scores: { awareness: 15, kindness: 15 } },
-    { id: 'finish-first', history: 'もうすこし つくってから わたした', reaction: 'おともだちは、となりで まった。', scores: { assertiveness: 10, awareness: 5 } },
-    { id: 'wait', history: 'つみきを もったまま まった', reaction: 'ふたりで つみきを みていた。', scores: { hesitation: 7 } },
-  ],
-}]
+  {
+    id: 'kindergarten-playhouse', eyebrow: 'おへやあそび', timeoutMs: 12_000,
+    presentation: {
+      situation: 'おへやあそび。ひとりで みている こがいる。',
+      choices: [
+        { actionId: 'invite', label: 'おいでと いう', symbol: '👋' },
+        { actionId: 'bring-toy', label: 'おもちゃを もっていく', symbol: '🧸' },
+        { actionId: 'keep-playing', label: 'そのまま あそぶ', symbol: '🏠' },
+      ],
+    },
+    actions: [
+      { id: 'invite', history: 'おいでと こえを かけた', reaction: 'おともだちが、そばへ きた。', scores: { awareness: 14, kindness: 14, assertiveness: 4 } },
+      { id: 'bring-toy', history: 'おもちゃを もっていった', reaction: 'ふたりの あそびが はじまった。', scores: { awareness: 12, kindness: 15 } },
+      { id: 'keep-playing', history: 'そのまま あそんだ', reaction: 'おともだちは、すこし はなれて みていた。', scores: { assertiveness: 9, nerve: 6 } },
+      { id: 'wait', history: 'すこし ようすを みた', reaction: 'おへやの こえが つづいた。', scores: { awareness: 5, hesitation: 7 } },
+    ],
+  },
+]
 
 const juniorHighScenes: Scene[] = [{
   id: 'junior-high-cleanup', eyebrow: '部活のあと', timeoutMs: 13_000,
