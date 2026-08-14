@@ -10,7 +10,7 @@ export const trainPixiScene = {
   },
   artwork: { x: 0, y: 86, width: 1024, height: 1316 },
   bag: {
-    startPosition: { x: 650, y: 1035 },
+    startPosition: { x: 500, y: 850 },
     anchor: { x: 0.5, y: 0.5 },
     size: { width: 250, height: 221 },
   },
