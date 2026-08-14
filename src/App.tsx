@@ -1,6 +1,5 @@
 import { useLayoutEffect, useState } from 'react'
 import { GameScene } from './components/GameScene'
-import { Player } from './components/SceneArtwork'
 import { scenes } from './data/scenes'
 import { ageModes, getAgeMode } from './data/ageModes'
 import { applyAction, calculatePlayScore, diagnose, initialScores, scoreAction } from './game/scoring'
@@ -38,8 +37,7 @@ export default function App() {
   }
 
   if (screen === 'title') return <main className="title-screen">
-    <div className="title-character"><Player /></div>
-    <div><p className="version">Ver. 0.6</p><h1>察して。</h1><p className="tagline">空気を読んでください。</p><p className="player-note">このオレンジの人が、あなたです。</p>
+    <div><p className="version">Ver. 0.6</p><h1>察して。</h1><p className="tagline">空気を読んでください。</p>
       <fieldset className="age-mode-picker"><legend>年代をえらぶ</legend>{ageModes.map(mode => <button
         type="button"
         key={mode.id}
