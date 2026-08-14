@@ -54,7 +54,7 @@ describe('train Pixi prototype coordinates', () => {
 
   it('keeps all layered artwork in one scene configuration', () => {
     expect(TRAIN_STAGE).toEqual({ width: 1024, height: 1536 })
-    expect(BAG_START).toEqual({ x: 650, y: 1035 })
+    expect(BAG_START).toEqual({ x: 500, y: 850 })
     expect(BAG_TARGET).toMatchObject({ id: 'floor', x: 365, y: 1240, radius: 160, consideration: 1 })
     expect(trainPixiScene.assets).toEqual({
       background: '/prototypes/train-pixi/train-before.png',
