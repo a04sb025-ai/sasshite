@@ -6,6 +6,8 @@
 
 ## 現在地
 
+AI Game Directorの小規模改善として、ゲーム本体の5場面のうち「帰り際」を最後に保ったまま、前4場面をプレイ開始ごとに並べ替える構造を追加した。再プレイ時は直前と同じ順番を避け、結果画面から順番の変化が分かる文言で再挑戦できる。場面データ、採点、各操作内容は変更していない。
+
 Layered Art + PixiJS Prototype v1を実装し、ローカル検査に加えてAndroid実機でバッグのタッチ・ドラッグ・ドロップが正常に動作することを確認しました。
 
 - Before / Afterを別々の背景Spriteとして読み込む。
@@ -133,6 +135,8 @@ Before合格後:
 - AI Game Directorによる複数改善の連続実行
 
 ## 完了したこと
+
+- ゲーム本体の場面順を純粋関数で構成し、最終場面固定・全場面重複なし・再プレイ時の同順回避をテストで固定した。
 
 - Layered Art + PixiJS Prototype v1で、Before / After背景Sprite、独立Bag Sprite、scene config、settle + crossfade、resetを実装した（Android Preview確認待ち）。
 - 仮素材はローカルSVGのみで用意し、Image APIを呼び出さず、人物のPixiJS Graphics描画を削除した。

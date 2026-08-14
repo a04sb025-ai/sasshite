@@ -3,6 +3,7 @@ import { GameScene } from './components/GameScene'
 import { Player } from './components/SceneArtwork'
 import { scenes } from './data/scenes'
 import { applyAction, diagnose, initialScores } from './game/scoring'
+import { createSceneOrder } from './game/sceneOrder'
 import type { Action, GameRecord, Scores } from './types'
 
 type Screen = 'title' | 'game' | 'result'
@@ -12,11 +13,18 @@ export default function App() {
   const [index, setIndex] = useState(0)
   const [scores, setScores] = useState<Scores>(initialScores)
   const [records, setRecords] = useState<GameRecord[]>([])
-  const start = () => { setScores(initialScores); setRecords([]); setIndex(0); setScreen('game') }
+  const [playScenes, setPlayScenes] = useState(scenes)
+  const start = () => {
+    setPlayScenes(current => createSceneOrder(scenes, screen === 'result' ? current.map(scene => scene.id) : []))
+    setScores(initialScores)
+    setRecords([])
+    setIndex(0)
+    setScreen('game')
+  }
   const complete = (action: Action) => {
     setScores(current => applyAction(current, action))
-    setRecords(current => [...current, { scene: scenes[index].eyebrow, action: action.history }])
-    if (index === scenes.length - 1) setScreen('result')
+    setRecords(current => [...current, { scene: playScenes[index].eyebrow, action: action.history }])
+    if (index === playScenes.length - 1) setScreen('result')
     else setIndex(current => current + 1)
   }
 
@@ -24,12 +32,12 @@ export default function App() {
     <div className="title-character"><Player /></div>
     <div><p className="version">Ver. 0.6</p><h1>察して。</h1><p className="tagline">空気を読んでください。</p><p className="player-note">このオレンジの人が、あなたです。</p><button className="text-button" onClick={start}>はじめる</button></div>
   </main>
-  if (screen === 'game') return <GameScene key={scenes[index].id} scene={scenes[index]} number={index + 1} total={scenes.length} onComplete={complete} />
+  if (screen === 'game') return <GameScene key={playScenes[index].id} scene={playScenes[index]} number={index + 1} total={playScenes.length} onComplete={complete} />
 
   const result = diagnose(scores)
   return <main className="result-screen">
     <p>あなたの察し方は</p><h1>「{result.title}」</h1><p className="comment">{result.comment}</p>
     <section className="history" aria-labelledby="history-title"><h2 id="history-title">あのとき、あなたは</h2><ol>{records.map(record => <li key={record.scene}><span>{record.scene}</span><p>{record.action}</p></li>)}</ol></section>
-    <button className="text-button" onClick={start}>もう一度</button>
+    <button className="text-button" onClick={start}>順番を変えてもう一度</button>
   </main>
 }
