@@ -8,7 +8,9 @@ on:
         required: true
         default: analyze
         type: choice
-        options: [analyze, implement]
+        options:
+          - analyze
+          - implement
       objective:
         description: "Optional focus for this single improvement cycle"
         required: false
@@ -19,7 +21,6 @@ on:
         default: false
         type: boolean
   schedule:
-    # Overnight prototype sprint. Independent lanes are staggered every hour.
     - cron: "20 * * * *"
 
 permissions:
@@ -35,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      CODEX_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout latest main
@@ -43,18 +44,27 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+
       - name: Install project dependencies
         run: npm ci
+
       - name: Install Codex CLI
         run: npm install --global @openai/codex
-      - name: Verify required secret
+
+      - name: Verify Codex authentication input
         run: |
-          if [ -z "${OPENAI_API_KEY:-}" ]; then echo "OPENAI_API_KEY is required." >&2; exit 1; fi
+          if [ -z "${CODEX_API_KEY:-}" ]; then
+            echo "CODEX_API_KEY is empty. Repository secret OPENAI_API_KEY must contain a valid OpenAI API key." >&2
+            exit 1
+          fi
+          echo "Codex API credential is present."
+
       - name: Resolve run policy
         env:
           INPUT_MODE: ${{ inputs.mode }}
@@ -71,24 +81,38 @@ jobs:
               2) LANE="CONTENT: prioritize representative safe scenarios for kindergarten, junior-high, and working-adult modes, with clear age differences. Add only a small reviewed batch." ;;
               3) LANE="UX: prioritize mobile clarity, immediate interaction feedback, comprehensible outcomes, and removal of blockers that make the prototype hard to play." ;;
             esac
-            echo "OBJECTIVE=OVERNIGHT PROTOTYPE SPRINT. $LANE Read docs/prototype-milestone.md and docs/release-readiness.md. Work only on the highest-priority unmet milestone in this lane. Do not do tiny cosmetic polish while a core prototype milestone remains incomplete. Before editing, inspect current main and open PRs; if another lane already completed the need, choose the next unmet milestone. Implement one coherent improvement and keep it safe for automatic merge." >> "$GITHUB_ENV"
+            echo "OBJECTIVE=OVERNIGHT PROTOTYPE SPRINT. $LANE Read docs/prototype-milestone.md and docs/release-readiness.md. Work on the highest-priority unmet milestone in this lane. Implement one coherent improvement and keep it safe for automatic merge." >> "$GITHUB_ENV"
           else
             echo "RUN_MODE=${INPUT_MODE:-analyze}" >> "$GITHUB_ENV"
             echo "AUTO_MERGE=${INPUT_AUTO_MERGE:-false}" >> "$GITHUB_ENV"
             echo "OBJECTIVE=${INPUT_OBJECTIVE:-}" >> "$GITHUB_ENV"
           fi
+
       - name: Capture current open PRs
         run: |
-          gh pr list --repo "${GITHUB_REPOSITORY}" --state open --limit 30 --json number,title,headRefName,baseRefName,url,body > /tmp/open-prs.json
+          gh pr list --repo "${GITHUB_REPOSITORY}" --state open --limit 30 \
+            --json number,title,headRefName,baseRefName,url,body > /tmp/open-prs.json
+
       - name: Build Game Director prompt
         run: |
           cp prompts/codex/game-director-v1.md /tmp/game-director-prompt.md
-          { echo; echo "## この実行で指定された追加目的"; printf '%s\n' "${OBJECTIVE:-指定なし}"; echo; echo "## 現在openのPR一覧"; cat /tmp/open-prs.json; } >> /tmp/game-director-prompt.md
+          {
+            echo
+            echo "## この実行で指定された追加目的"
+            printf '%s\n' "${OBJECTIVE:-指定なし}"
+            echo
+            echo "## 現在openのPR一覧"
+            cat /tmp/open-prs.json
+          } >> /tmp/game-director-prompt.md
+
       - name: Analyze one improvement
         if: ${{ env.RUN_MODE == 'analyze' }}
         run: |
-          codex exec --ephemeral --sandbox read-only --output-last-message /tmp/game-director-result.md - < /tmp/game-director-prompt.md
+          codex exec --ephemeral --sandbox read-only \
+            --output-last-message /tmp/game-director-result.md \
+            - < /tmp/game-director-prompt.md
           cat /tmp/game-director-result.md >> "$GITHUB_STEP_SUMMARY"
+
       - name: Prepare autonomous improvement branch
         if: ${{ env.RUN_MODE == 'implement' }}
         run: |
@@ -97,27 +121,49 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$BRANCH"
+
       - name: Implement exactly one improvement
         if: ${{ env.RUN_MODE == 'implement' }}
-        run: codex exec --ephemeral --sandbox workspace-write --output-last-message /tmp/game-director-result.md - < /tmp/game-director-prompt.md
+        run: |
+          codex exec --ephemeral --sandbox workspace-write \
+            --output-last-message /tmp/game-director-result.md \
+            - < /tmp/game-director-prompt.md
+
       - name: Enforce autonomous safety boundaries
         if: ${{ env.RUN_MODE == 'implement' }}
         run: |
           set -euo pipefail
           git diff --check
           mapfile -t files < <(git diff --name-only)
-          if [ "${#files[@]}" -eq 0 ]; then echo "NO_CHANGES=true" >> "$GITHUB_ENV"; echo "Codex produced no repository changes." >> "$GITHUB_STEP_SUMMARY"; exit 0; fi
-          if [ "${#files[@]}" -gt 12 ]; then echo "Autonomous cycle exceeded 12-file prototype limit." >&2; exit 1; fi
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "NO_CHANGES=true" >> "$GITHUB_ENV"
+            echo "Codex produced no repository changes." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ "${#files[@]}" -gt 12 ]; then
+            echo "Autonomous cycle exceeded 12-file prototype limit." >&2
+            exit 1
+          fi
           protected_pattern='^(\.github/workflows/|AGENTS\.md$|docs/game-vision\.md$|docs/age-modes\.md$|docs/evaluation-rubric\.md$|docs/autonomous-development\.md$|docs/release-readiness\.md$|docs/prototype-milestone\.md$|package\.json$|package-lock\.json$|wrangler\.jsonc$|prompts/imagegen/|scripts/imagegen/|public/)'
-          for file in "${files[@]}"; do if [[ "$file" =~ $protected_pattern ]]; then echo "Attempted protected change: $file" >&2; exit 1; fi; done
-          { echo "### Changed files"; printf -- '- `%s`\n' "${files[@]}"; } >> "$GITHUB_STEP_SUMMARY"
+          for file in "${files[@]}"; do
+            if [[ "$file" =~ $protected_pattern ]]; then
+              echo "Attempted protected change: $file" >&2
+              exit 1
+            fi
+          done
+          {
+            echo "### Changed files"
+            printf -- '- `%s`\n' "${files[@]}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Run independent validation
         if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES != 'true' }}
         run: |
           npm run typecheck
           npm test
           npm run build
-      - name: Rebase candidate on latest main and revalidate
+
+      - name: Commit, rebase, and revalidate
         if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES != 'true' }}
         run: |
           git add -A
@@ -127,22 +173,42 @@ jobs:
           npm run typecheck
           npm test
           npm run build
+
       - name: Push candidate
         if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES != 'true' }}
         run: git push --set-upstream origin "$BRANCH"
+
       - name: Open pull request
         if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES != 'true' }}
         run: |
-          TITLE=$(sed -n 's/^TITLE:[[:space:]]*//p' /tmp/game-director-result.md | head -n 1); [ -n "$TITLE" ] || TITLE="AI Game Director autonomous improvement"
-          { echo "## AI Game Director overnight sprint"; echo; echo '```text'; cat /tmp/game-director-result.md; echo '```'; echo; echo "## Independent gates"; echo "- one coherent lane improvement"; echo "- maximum 12 changed files"; echo "- protected/high-risk paths blocked"; echo "- rebased on latest main"; echo "- typecheck, test, build passed before and after rebase"; } > /tmp/pr-body.md
+          TITLE=$(sed -n 's/^TITLE:[[:space:]]*//p' /tmp/game-director-result.md | head -n 1)
+          [ -n "$TITLE" ] || TITLE="AI Game Director autonomous improvement"
+          {
+            echo "## AI Game Director overnight sprint"
+            echo
+            echo '```text'
+            cat /tmp/game-director-result.md
+            echo '```'
+            echo
+            echo "## Independent gates"
+            echo "- one coherent lane improvement"
+            echo "- maximum 12 changed files"
+            echo "- protected/high-risk paths blocked"
+            echo "- rebased on latest main"
+            echo "- typecheck, test, build passed before and after rebase"
+          } > /tmp/pr-body.md
           PR_URL=$(gh pr create --repo "${GITHUB_REPOSITORY}" --base main --head "$BRANCH" --title "$TITLE" --body-file /tmp/pr-body.md)
           echo "PR_NUMBER=$(gh pr view "$PR_URL" --json number --jq .number)" >> "$GITHUB_ENV"
+
       - name: Auto-merge safe improvement
         if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES != 'true' && env.AUTO_MERGE == 'true' }}
         run: |
           gh pr merge "$PR_NUMBER" --repo "${GITHUB_REPOSITORY}" --squash --delete-branch
           echo "Safe-scope autonomous improvement merged to main." >> "$GITHUB_STEP_SUMMARY"
+
       - name: Summarize no-change result
         if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES == 'true' }}
         run: |
-          if [ -f /tmp/game-director-result.md ]; then cat /tmp/game-director-result.md >> "$GITHUB_STEP_SUMMARY"; fi
+          if [ -f /tmp/game-director-result.md ]; then
+            cat /tmp/game-director-result.md >> "$GITHUB_STEP_SUMMARY"
+          fi
