@@ -1,4 +1,4 @@
-import type { Action, Scores } from '../types'
+import type { Action, GameRecord, Scene, Scores } from '../types'
 
 export const initialScores: Scores = { awareness: 40, kindness: 40, assertiveness: 40, nerve: 40, hesitation: 0 }
 
@@ -6,6 +6,20 @@ export function applyAction(scores: Scores, action: Action): Scores {
   return Object.fromEntries(Object.entries(scores).map(([key, value]) => [
     key, Math.max(0, Math.min(100, value + (action.scores[key as keyof Scores] ?? 0))),
   ])) as Scores
+}
+
+function actionImpact(action: Action): number {
+  return Object.values(action.scores).reduce((total, value) => total + Math.max(0, value ?? 0), 0)
+}
+
+export function scoreAction(scene: Scene, action: Action): number {
+  const maximum = Math.max(0, ...scene.actions.map(actionImpact))
+  return maximum === 0 ? 0 : Math.round(actionImpact(action) / maximum * 100)
+}
+
+export function calculatePlayScore(records: readonly GameRecord[]): number {
+  if (records.length === 0) return 0
+  return Math.round(records.reduce((total, record) => total + record.score, 0) / records.length)
 }
 
 export function diagnose(scores: Scores) {

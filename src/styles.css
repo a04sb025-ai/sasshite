@@ -142,15 +142,19 @@ button:focus-visible { outline: 3px solid #b45128; outline-offset: 3px; }
 
 .result-screen { text-align: center; padding: 60px 24px 40px; }
 .result-screen > p:first-child { font-size: 13px; letter-spacing: .15em; }
+.result-score { display: flex; align-items: baseline; justify-content: center; gap: 7px; margin: 8px 0 24px; }
+.result-score strong { font-size: 52px; font-weight: 500; line-height: 1; }
+.result-score span { color: #777167; font-size: 14px; }
 .result-screen h1 { margin: 18px 0; font-size: 25px; }
 .comment { min-height: 48px; font-size: 13px; color: #67635b; }
 .result-mode { margin: -24px 0 28px; color: #777167; font-size: 11px; }
 .history { width: min(100%, 360px); margin: 40px auto; padding-top: 20px; text-align: left; border-top: 1px solid #c9c1b2; }
 .history h2 { margin: 0 0 18px; font-size: 13px; font-weight: 400; letter-spacing: .13em; }
 .history ol { margin: 0; padding: 0; list-style: none; }
-.history li { display: grid; grid-template-columns: 78px 1fr; gap: 12px; padding: 9px 0; border-bottom: 1px dashed #d8d0c1; }
+.history li { display: grid; grid-template-columns: 78px 1fr auto; gap: 12px; padding: 9px 0; border-bottom: 1px dashed #d8d0c1; }
 .history span { font-size: 11px; color: #777167; }
 .history p { margin: 0; font-size: 12px; }
+.history strong { color: #67635b; font-size: 11px; font-weight: 500; white-space: nowrap; }
 
 @media (max-width: 340px) {
   .game-screen { padding-inline: 10px; }

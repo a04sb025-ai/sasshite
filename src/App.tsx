@@ -3,7 +3,7 @@ import { GameScene } from './components/GameScene'
 import { Player } from './components/SceneArtwork'
 import { scenes } from './data/scenes'
 import { ageModes, getAgeMode } from './data/ageModes'
-import { applyAction, diagnose, initialScores } from './game/scoring'
+import { applyAction, calculatePlayScore, diagnose, initialScores, scoreAction } from './game/scoring'
 import { createSceneOrder } from './game/sceneOrder'
 import type { Action, AgeModeId, GameRecord, Scores } from './types'
 
@@ -25,8 +25,9 @@ export default function App() {
     setScreen('game')
   }
   const complete = (action: Action) => {
+    const scene = playScenes[index]
     setScores(current => applyAction(current, action))
-    setRecords(current => [...current, { scene: playScenes[index].eyebrow, action: action.history }])
+    setRecords(current => [...current, { scene: scene.eyebrow, action: action.history, score: scoreAction(scene, action) }])
     if (index === playScenes.length - 1) setScreen('result')
     else setIndex(current => current + 1)
   }
@@ -48,9 +49,11 @@ export default function App() {
   const result = ageModeId === 'kindergarten'
     ? { title: 'きょうの えらびかた', comment: 'みたり、うごいたり、まったり。どれも きみが えらんだこと。' }
     : diagnose(scores)
+  const playScore = calculatePlayScore(records)
   return <main className="result-screen">
-    <p>あなたの察し方は</p><h1>「{result.title}」</h1><p className="comment">{result.comment}</p>
-    <section className="history" aria-labelledby="history-title"><h2 id="history-title">あのとき、あなたは</h2><ol>{records.map(record => <li key={record.scene}><span>{record.scene}</span><p>{record.action}</p></li>)}</ol></section>
+    <p>今回の察しスコア</p><div className="result-score"><strong>{playScore}</strong><span>/ 100</span></div>
+    <h1>「{result.title}」</h1><p className="comment">{result.comment}</p>
+    <section className="history" aria-labelledby="history-title"><h2 id="history-title">あのとき、あなたは</h2><ol>{records.map(record => <li key={record.scene}><span>{record.scene}</span><p>{record.action}</p><strong>{record.score}点</strong></li>)}</ol></section>
     <p className="result-mode">{getAgeMode(ageModeId).label}・{playScenes.length}場面のサンプル</p>
     <button className="text-button" onClick={start}>{playScenes.length > 2 ? '順番を変えてもう一度' : 'もう一度'}</button>
   </main>

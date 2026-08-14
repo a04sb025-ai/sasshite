@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { scenes } from '../data/scenes'
 import { ageModes } from '../data/ageModes'
-import { applyAction, diagnose, initialScores } from './scoring'
+import { applyAction, calculatePlayScore, diagnose, initialScores, scoreAction } from './scoring'
 
 describe('Ver.0.6 game model', () => {
   it('provides five direct-interaction scenes and a timeout action', () => {
@@ -18,6 +18,24 @@ describe('Ver.0.6 game model', () => {
   it('describes different habits without a right-answer count', () => {
     expect(diagnose({ awareness: 90, kindness: 90, assertiveness: 40, nerve: 40, hesitation: 0 }).title).toContain('疲れる')
     expect(diagnose({ awareness: 40, kindness: 40, assertiveness: 40, nerve: 90, hesitation: 0 }).title).toBe('鋼のマイペース')
+  })
+  it('connects every action to a finite 100-point result', () => {
+    const sampleScenes = ageModes.flatMap(mode => mode.scenes)
+
+    for (const scene of sampleScenes) {
+      const actionScores = scene.actions.map(action => scoreAction(scene, action))
+      expect(actionScores.every(score => Number.isInteger(score) && score >= 0 && score <= 100)).toBe(true)
+      expect(Math.max(...actionScores)).toBe(100)
+    }
+
+    const records = scenes.map(scene => {
+      const action = scene.actions.reduce((best, candidate) =>
+        scoreAction(scene, candidate) > scoreAction(scene, best) ? candidate : best,
+      )
+      return { scene: scene.eyebrow, action: action.history, score: scoreAction(scene, action) }
+    })
+    expect(calculatePlayScore(records)).toBe(100)
+    expect(calculatePlayScore([])).toBe(0)
   })
   it('models all age modes and exposes only reviewed representative samples', () => {
     expect(ageModes).toHaveLength(7)

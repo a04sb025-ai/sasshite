@@ -23,4 +23,4 @@ export type Scene = {
   presentation?: ScenePresentation
 }
 
-export type GameRecord = { scene: string; action: string }
+export type GameRecord = { scene: string; action: string; score: number }
