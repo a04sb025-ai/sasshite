@@ -8,11 +8,19 @@ export type Action = {
   scores: Partial<Scores>
 }
 
+export type AgeModeId = 'kindergarten' | 'lower-elementary' | 'upper-elementary' | 'junior-high' | 'high-school' | 'university' | 'working-adult'
+
+export type ScenePresentation = {
+  situation: string
+  choices: { actionId: string; label: string; symbol: string }[]
+}
+
 export type Scene = {
-  id: 'train' | 'elevator' | 'karaage' | 'meeting' | 'ending'
+  id: string
   eyebrow: string
   timeoutMs: number
   actions: Action[]
+  presentation?: ScenePresentation
 }
 
 export type GameRecord = { scene: string; action: string }

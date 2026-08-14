@@ -13,6 +13,7 @@ import elevatorArtwork from '../assets/scenes/elevator.svg'
 import karaageArtwork from '../assets/scenes/karaage.svg'
 import meetingArtwork from '../assets/scenes/meeting.svg'
 import trainArtwork from '../assets/scenes/train.svg'
+import { ageModes } from '../data/ageModes'
 
 type Props = { sceneId: Scene['id']; acted: string | null; onAction: (id: string) => void }
 type ArtSource = 'generated' | 'fallback'
@@ -310,5 +311,16 @@ export function SceneArtwork(props: Props) {
   if (props.sceneId === 'elevator') return <Elevator {...props} />
   if (props.sceneId === 'karaage') return <Karaage {...props} />
   if (props.sceneId === 'meeting') return <Meeting {...props} />
-  return <Ending {...props} />
+  if (props.sceneId === 'ending') return <Ending {...props} />
+  const scene = ageModes.flatMap(mode => mode.scenes).find(item => item.id === props.sceneId)
+  if (!scene?.presentation) return null
+  return <div className="art choice-scene" aria-label={scene.presentation.situation}>
+    <p>{scene.presentation.situation}</p>
+    <div>{scene.presentation.choices.map(choice => <button
+      type="button"
+      key={choice.actionId}
+      className={`choice-action ${props.acted === choice.actionId ? 'selected' : ''}`}
+      onClick={() => props.onAction(choice.actionId)}
+    ><span aria-hidden="true">{choice.symbol}</span>{choice.label}</button>)}</div>
+  </div>
 }

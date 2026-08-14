@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { scenes } from '../data/scenes'
+import { ageModes } from '../data/ageModes'
 import { applyAction, diagnose, initialScores } from './scoring'
 
 describe('Ver.0.6 game model', () => {
@@ -17,5 +18,17 @@ describe('Ver.0.6 game model', () => {
   it('describes different habits without a right-answer count', () => {
     expect(diagnose({ awareness: 90, kindness: 90, assertiveness: 40, nerve: 40, hesitation: 0 }).title).toContain('疲れる')
     expect(diagnose({ awareness: 40, kindness: 40, assertiveness: 40, nerve: 90, hesitation: 0 }).title).toBe('鋼のマイペース')
+  })
+  it('models all age modes and exposes only reviewed representative samples', () => {
+    expect(ageModes).toHaveLength(7)
+    expect(ageModes.filter(mode => mode.status === 'sample').map(mode => mode.id)).toEqual([
+      'kindergarten', 'junior-high', 'working-adult',
+    ])
+    expect(ageModes.filter(mode => mode.status === 'development').every(mode => mode.scenes.length === 0)).toBe(true)
+    expect(ageModes.filter(mode => mode.status === 'sample').every(mode => mode.scenes.length > 0)).toBe(true)
+    expect(ageModes.flatMap(mode => mode.scenes).every(scene => scene.actions.some(action => action.id === 'wait'))).toBe(true)
+    expect(ageModes.flatMap(mode => mode.scenes).every(scene => scene.presentation?.choices.every(choice =>
+      scene.actions.some(action => action.id === choice.actionId),
+    ) ?? true)).toBe(true)
   })
 })
