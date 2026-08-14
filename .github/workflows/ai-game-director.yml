@@ -21,7 +21,8 @@ on:
         default: false
         type: boolean
   schedule:
-    - cron: "20 3 * * *"
+    # Prototype acceleration mode: six independent cycles per day.
+    - cron: "20 0,3,6,9,12,15 * * *"
 
 permissions:
   contents: write
@@ -73,7 +74,7 @@ jobs:
           if [ "${GITHUB_EVENT_NAME}" = "schedule" ]; then
             echo "RUN_MODE=implement" >> "$GITHUB_ENV"
             echo "AUTO_MERGE=true" >> "$GITHUB_ENV"
-            echo "OBJECTIVE=Move the game toward the release-readiness criteria. Read docs/release-readiness.md, identify the highest-value unmet criterion that can be improved safely in one small cycle, and improve exactly one thing." >> "$GITHUB_ENV"
+            echo "OBJECTIVE=PROTOTYPE ACCELERATION MODE. Prioritize completing the playable core before cosmetic polish. Read docs/prototype-milestone.md and docs/release-readiness.md. Choose the highest-priority unmet prototype milestone that can be completed safely in one coherent cycle. Implement exactly one milestone-sized improvement. Prefer: age-mode selection and session architecture; about 10-question randomized sessions; scoring/results/personal best/replay; representative kindergarten, junior-high, and working-adult content; then interaction clarity and polish. Do not spend a cycle on tiny cosmetic tweaks while a higher-priority prototype milestone remains incomplete." >> "$GITHUB_ENV"
           else
             echo "RUN_MODE=${INPUT_MODE:-analyze}" >> "$GITHUB_ENV"
             echo "AUTO_MERGE=${INPUT_AUTO_MERGE:-false}" >> "$GITHUB_ENV"
@@ -130,12 +131,13 @@ jobs:
             exit 0
           fi
 
-          if [ "${#files[@]}" -gt 8 ]; then
-            echo "Autonomous cycle exceeded 8-file limit." >&2
+          # Acceleration mode permits a coherent prototype slice while retaining protected paths.
+          if [ "${#files[@]}" -gt 12 ]; then
+            echo "Autonomous cycle exceeded 12-file prototype limit." >&2
             exit 1
           fi
 
-          protected_pattern='^(\.github/workflows/|AGENTS\.md$|docs/game-vision\.md$|docs/age-modes\.md$|docs/evaluation-rubric\.md$|docs/autonomous-development\.md$|docs/release-readiness\.md$|package\.json$|package-lock\.json$|wrangler\.jsonc$|prompts/imagegen/|scripts/imagegen/|public/)'
+          protected_pattern='^(\.github/workflows/|AGENTS\.md$|docs/game-vision\.md$|docs/age-modes\.md$|docs/evaluation-rubric\.md$|docs/autonomous-development\.md$|docs/release-readiness\.md$|docs/prototype-milestone\.md$|package\.json$|package-lock\.json$|wrangler\.jsonc$|prompts/imagegen/|scripts/imagegen/|public/)'
           for file in "${files[@]}"; do
             if [[ "$file" =~ $protected_pattern ]]; then
               echo "Autonomous v1 attempted to modify protected file: $file" >&2
@@ -176,8 +178,8 @@ jobs:
             echo '```'
             echo
             echo "## Independent gates"
-            echo "- one improvement only"
-            echo "- maximum 8 changed files"
+            echo "- one coherent prototype improvement only"
+            echo "- maximum 12 changed files during acceleration mode"
             echo "- protected/high-risk paths blocked"
             echo "- typecheck, test, build passed"
             echo "- auto-merge only when explicitly enabled or scheduled"
