@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { GameScene } from './components/GameScene'
 import { Player } from './components/SceneArtwork'
 import { scenes } from './data/scenes'
@@ -12,6 +12,12 @@ export default function App() {
   const [index, setIndex] = useState(0)
   const [scores, setScores] = useState<Scores>(initialScores)
   const [records, setRecords] = useState<GameRecord[]>([])
+  const resultHeadingRef = useRef<HTMLHeadingElement>(null)
+
+  useEffect(() => {
+    if (screen === 'result') resultHeadingRef.current?.focus()
+  }, [screen])
+
   const start = () => { setScores(initialScores); setRecords([]); setIndex(0); setScreen('game') }
   const complete = (action: Action) => {
     setScores(current => applyAction(current, action))
@@ -28,7 +34,7 @@ export default function App() {
 
   const result = diagnose(scores)
   return <main className="result-screen">
-    <p>あなたの察し方は</p><h1>「{result.title}」</h1><p className="comment">{result.comment}</p>
+    <p>あなたの察し方は</p><h1 ref={resultHeadingRef} tabIndex={-1}>「{result.title}」</h1><p className="comment">{result.comment}</p>
     <section className="history" aria-labelledby="history-title"><h2 id="history-title">あのとき、あなたは</h2><ol>{records.map(record => <li key={record.scene}><span>{record.scene}</span><p>{record.action}</p></li>)}</ol></section>
     <button className="text-button" onClick={start}>もう一度</button>
   </main>

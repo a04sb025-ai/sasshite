@@ -134,6 +134,7 @@ Before合格後:
 
 ## 完了したこと
 
+- AI Game Director v1の1改善として、ゲーム完走時に結果見出しへフォーカスを移すようにした。SPA内の画面切替でもキーボード／スクリーンリーダー利用者が結果到達を認識でき、次のTab操作では従来どおり「もう一度」へ進める。ゲーム進行、採点、場面操作は変更していない。
 - Layered Art + PixiJS Prototype v1で、Before / After背景Sprite、独立Bag Sprite、scene config、settle + crossfade、resetを実装した（Android Preview確認待ち）。
 - 仮素材はローカルSVGのみで用意し、Image APIを呼び出さず、人物のPixiJS Graphics描画を削除した。
 - Layered Art版のバッグ操作について、Android実機で座標変換、grab offset、指追従、drop判定、Before→After遷移が正常に動作することを確認し、今後の回帰基準として固定した。
