@@ -108,7 +108,10 @@ jobs:
       - name: Analyze one improvement
         if: ${{ env.RUN_MODE == 'analyze' }}
         run: |
-          codex exec --ephemeral --sandbox read-only \
+          # GitHub-hosted runners already provide an ephemeral VM boundary. Codex's
+          # Linux bubblewrap sandbox cannot initialize reliably here, so run Codex
+          # without its nested OS sandbox. Analysis remains instruction-only.
+          codex exec --ephemeral --sandbox danger-full-access \
             --output-last-message /tmp/game-director-result.md \
             - < /tmp/game-director-prompt.md
           cat /tmp/game-director-result.md >> "$GITHUB_STEP_SUMMARY"
@@ -125,7 +128,10 @@ jobs:
       - name: Implement exactly one improvement
         if: ${{ env.RUN_MODE == 'implement' }}
         run: |
-          codex exec --ephemeral --sandbox workspace-write \
+          # Avoid nested bubblewrap on the GitHub runner. Repository writes are
+          # constrained after execution by protected-path, file-count, diff,
+          # test/build, rebase, and PR/merge gates below.
+          codex exec --ephemeral --sandbox danger-full-access \
             --output-last-message /tmp/game-director-result.md \
             - < /tmp/game-director-prompt.md
 
@@ -196,6 +202,7 @@ jobs:
             echo "- protected/high-risk paths blocked"
             echo "- rebased on latest main"
             echo "- typecheck, test, build passed before and after rebase"
+            echo "- Codex nested OS sandbox disabled only inside ephemeral GitHub runner"
           } > /tmp/pr-body.md
           PR_URL=$(gh pr create --repo "${GITHUB_REPOSITORY}" --base main --head "$BRANCH" --title "$TITLE" --body-file /tmp/pr-body.md)
           echo "PR_NUMBER=$(gh pr view "$PR_URL" --json number --jq .number)" >> "$GITHUB_ENV"
