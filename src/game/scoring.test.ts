@@ -60,4 +60,15 @@ describe('Ver.0.6 game model', () => {
       && scene.actions.some(action => action.id === 'wait'),
     )).toBe(true)
   })
+  it('offers multiple junior-high situations with distinct settings', () => {
+    const juniorHigh = ageModes.find(mode => mode.id === 'junior-high')
+
+    expect(juniorHigh?.scenes).toHaveLength(2)
+    expect(new Set(juniorHigh?.scenes.map(scene => scene.eyebrow)).size).toBe(2)
+    expect(juniorHigh?.scenes.every(scene =>
+      scene.presentation !== undefined
+      && scene.presentation.choices.length >= 3
+      && scene.actions.some(action => action.id === 'wait'),
+    )).toBe(true)
+  })
 })

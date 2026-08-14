@@ -43,23 +43,42 @@ const kindergartenScenes: Scene[] = [
   },
 ]
 
-const juniorHighScenes: Scene[] = [{
-  id: 'junior-high-cleanup', eyebrow: '部活のあと', timeoutMs: 13_000,
-  presentation: {
-    situation: '先輩は話している。友達はまだ一人で片付けている。',
-    choices: [
-      { actionId: 'help', label: '友達の片付けを手伝う', symbol: '📦' },
-      { actionId: 'invite', label: '先輩にも声をかける', symbol: '💬' },
-      { actionId: 'leave', label: '先に帰る', symbol: '🎒' },
+const juniorHighScenes: Scene[] = [
+  {
+    id: 'junior-high-cleanup', eyebrow: '部活のあと', timeoutMs: 13_000,
+    presentation: {
+      situation: '先輩は話している。友達はまだ一人で片付けている。',
+      choices: [
+        { actionId: 'help', label: '友達の片付けを手伝う', symbol: '📦' },
+        { actionId: 'invite', label: '先輩にも声をかける', symbol: '💬' },
+        { actionId: 'leave', label: '先に帰る', symbol: '🎒' },
+      ],
+    },
+    actions: [
+      { id: 'help', history: '友達の片付けを手伝った', reaction: '箱が、少し早く空になった。', scores: { awareness: 14, kindness: 14 } },
+      { id: 'invite', history: '先輩にも片付けを呼びかけた', reaction: '話が止まり、手が二つ増えた。', scores: { awareness: 12, assertiveness: 13 } },
+      { id: 'leave', history: '声をかけず先に帰った', reaction: '友達は、残りの箱を持ち上げた。', scores: { nerve: 12 } },
+      { id: 'wait', history: '少し様子を見た', reaction: '片付けの音だけが続いた。', scores: { awareness: 6, hesitation: 9 } },
     ],
   },
-  actions: [
-    { id: 'help', history: '友達の片付けを手伝った', reaction: '箱が、少し早く空になった。', scores: { awareness: 14, kindness: 14 } },
-    { id: 'invite', history: '先輩にも片付けを呼びかけた', reaction: '話が止まり、手が二つ増えた。', scores: { awareness: 12, assertiveness: 13 } },
-    { id: 'leave', history: '声をかけず先に帰った', reaction: '友達は、残りの箱を持ち上げた。', scores: { nerve: 12 } },
-    { id: 'wait', history: '少し様子を見た', reaction: '片付けの音だけが続いた。', scores: { awareness: 6, hesitation: 9 } },
-  ],
-}]
+  {
+    id: 'junior-high-break', eyebrow: '休み時間', timeoutMs: 13_000,
+    presentation: {
+      situation: '友達と話している。クラスメイトが近くで、何度かこちらを見ている。',
+      choices: [
+        { actionId: 'make-room', label: '少し場所をあける', symbol: '↔️' },
+        { actionId: 'talk-later', label: 'あとで声をかける', symbol: '👋' },
+        { actionId: 'keep-talking', label: '今の話を続ける', symbol: '💬' },
+      ],
+    },
+    actions: [
+      { id: 'make-room', history: '少し場所をあけた', reaction: 'クラスメイトが、輪の近くまで来た。', scores: { awareness: 14, kindness: 12 } },
+      { id: 'talk-later', history: '話が終わってから声をかけた', reaction: 'クラスメイトは、廊下で立ち止まった。', scores: { awareness: 11, kindness: 10, hesitation: 4 } },
+      { id: 'keep-talking', history: '友達との話を続けた', reaction: 'クラスメイトは、別の席へ歩いていった。', scores: { assertiveness: 10, nerve: 7 } },
+      { id: 'wait', history: '少し様子を見た', reaction: '目が合って、すぐにそれた。', scores: { awareness: 7, hesitation: 8 } },
+    ],
+  },
+]
 
 const workingAdultSample: Scene = {
   id: 'working-adult-documents', eyebrow: '会議の前', timeoutMs: 12_000,
