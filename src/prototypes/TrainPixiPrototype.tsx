@@ -4,13 +4,24 @@ import { fitSceneToViewport } from './fitSceneToViewport'
 import { beginDropTransition, draggedBagPosition, dropOutcomeAt, grabOffset, type Point, type TrainOutcome, type TrainPrototypeState } from './trainPixiModel'
 import { trainPixiScene } from './trainPixiScene'
 
-export default function TrainPixiPrototype() {
+type Props = {
+  embedded?: boolean
+  disabled?: boolean
+  onAction?: (id: 'bag-lap' | 'bag-floor' | 'stand') => void
+}
+
+export default function TrainPixiPrototype({ embedded = false, disabled = false, onAction }: Props) {
   const hostRef = useRef<HTMLDivElement>(null)
   const showStateRef = useRef<(state: TrainPrototypeState) => void>(() => undefined)
   const resetSceneRef = useRef<() => void>(() => undefined)
   const outcomeRef = useRef<TrainOutcome | null>(null)
+  const actionRef = useRef(onAction)
+  const disabledRef = useRef(disabled)
   const [state, setState] = useState<TrainPrototypeState>('before')
   const [outcome, setOutcome] = useState<TrainOutcome | null>(null)
+
+  useEffect(() => { actionRef.current = onAction }, [onAction])
+  useEffect(() => { disabledRef.current = disabled }, [disabled])
 
   useEffect(() => {
     const host = hostRef.current
@@ -69,7 +80,6 @@ export default function TrainPixiPrototype() {
       npc.addChild(standingNpc, afterLapNpc, afterFloorNpc)
 
       for (const target of trainPixiScene.dropZones) {
-        // Invisible geometry keeps both destinations in sceneRoot bounds without revealing an answer guide.
         dropZone.addChild(new Graphics().circle(target.x, target.y, target.radius).fill({ color: '#000000', alpha: 0 }))
       }
 
@@ -82,7 +92,14 @@ export default function TrainPixiPrototype() {
       bag.position.set(trainPixiScene.bag.startPosition.x, trainPixiScene.bag.startPosition.y)
       bag.eventMode = 'static'
       bag.cursor = 'grab'
-      sceneRoot.addChild(background, player, npc, dropZone, bag)
+
+      const playerHit = new Graphics({ label: 'playerHit' })
+        .roundRect(95, 650, 300, 440, 28)
+        .fill({ color: '#000000', alpha: 0 })
+      playerHit.eventMode = 'static'
+      playerHit.cursor = 'pointer'
+
+      sceneRoot.addChild(background, player, npc, playerHit, dropZone, bag)
       app.stage.addChild(sceneRoot)
 
       const debug = new URLSearchParams(window.location.search).has('debug')
@@ -145,8 +162,14 @@ export default function TrainPixiPrototype() {
         animationFrame = requestAnimationFrame(draw)
       }
 
+      playerHit.on('pointertap', () => {
+        if (!embedded || disabledRef.current || !interactionEnabled) return
+        interactionEnabled = false
+        actionRef.current?.('stand')
+      })
+
       bag.on('pointerdown', event => {
-        if (!interactionEnabled) return
+        if (disabledRef.current || !interactionEnabled) return
         const pointer = event.getLocalPosition(sceneRoot)
         pointerGrabOffset = grabOffset(pointer, bag.position)
         dragging = true
@@ -175,7 +198,10 @@ export default function TrainPixiPrototype() {
           outcomeRef.current = transition.outcome
           setOutcome(transition.outcome)
           setState(transition.state)
-          settleTimer = window.setTimeout(() => setState('after'), trainPixiScene.successTransition.settleMs)
+          settleTimer = window.setTimeout(() => {
+            setState('after')
+            if (embedded) actionRef.current?.(transition.outcome === 'lap' ? 'bag-lap' : 'bag-floor')
+          }, trainPixiScene.successTransition.settleMs)
         } else {
           bag.position.set(trainPixiScene.bag.startPosition.x, trainPixiScene.bag.startPosition.y)
         }
@@ -200,7 +226,7 @@ export default function TrainPixiPrototype() {
       resetSceneRef.current = () => undefined
       if (initialized) app.destroy(true, { children: true, texture: false })
     }
-  }, [])
+  }, [embedded])
 
   useEffect(() => { showStateRef.current(state) }, [state])
 
@@ -210,6 +236,15 @@ export default function TrainPixiPrototype() {
     setOutcome(null)
     setState('before')
   }
+
+  if (embedded) return <div className="train-game-pixi" aria-label="電車内。隣の空席にバッグがあり、座りたそうな乗客が立っている">
+    <div ref={hostRef} className="train-pixi-host" />
+    <div className="train-pixi-keyboard-actions">
+      <button type="button" onClick={() => onAction?.('bag-lap')} disabled={disabled}>バッグを膝へ</button>
+      <button type="button" onClick={() => onAction?.('bag-floor')} disabled={disabled}>バッグを床へ</button>
+      <button type="button" onClick={() => onAction?.('stand')} disabled={disabled}>席を立つ</button>
+    </div>
+  </div>
 
   return <main className="train-prototype-page">
     <header className="train-prototype-header">
