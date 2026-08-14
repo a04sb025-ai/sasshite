@@ -43,6 +43,19 @@ Androidスマホ上で **PixiJS Prototype v1** を実機確認し、次を確認
 
 詳細な次タスクは [`docs/tasks/train-layered-art-pixi-v1.md`](./tasks/train-layered-art-pixi-v1.md) を正本とします。
 
+### 並行作業: AI Game Director v1
+
+ゲーム本体の電車統合とは分離して、自律改善基盤をPR #41で準備しています。
+
+- `docs/game-vision.md`: 長期ゲーム方針
+- `docs/age-modes.md`: 幼稚園〜社会人の7年代モードと30〜50シチュエーション/年代の方針
+- `docs/evaluation-rubric.md`: 改善Before / After用の100点評価基準
+- `docs/autonomous-development.md`: 1改善サイクルと安全境界
+- `prompts/codex/game-director-v1.md`: Codexの1サイクル実行指示
+- `.github/workflows/ai-game-director.yml`: 手動のanalyze / implement実行
+
+この並行作業は現行ゲームコードや電車Prototypeを変更しません。PR #41がmainへ入った後、まず `analyze` を1回実行し、次に `implement` を1回だけ手動実行してDraft PRの品質を確認します。定期実行や自動mergeにはまだ進みません。
+
 ## 決定済みの原則
 
 - GitHubを唯一の正本にし、PR → CI → Preview → Android確認 → mergeの順を守る。
@@ -56,6 +69,7 @@ Androidスマホ上で **PixiJS Prototype v1** を実機確認し、次を確認
 - Image APIを反復試行の主工程にしない。
 - Prototypeの合格前に本番ゲーム、採点、他ステージへ組み込まない。
 - 現在の`sceneRoot` local座標変換、grab offset保持、バッグ移動、同一座標系でのdrop判定を操作系の回帰基準とする。今後の見た目・viewport・演出変更ではこの処理を原則変更せず、既存の座標・drag regression testを必須で通す。
+- AI Game Director v1は手動起動・1改善・Draft PRまでとし、mainへ自動マージしない。
 
 ## 次のタスク
 
@@ -115,6 +129,8 @@ Before合格後:
 - 採点、問題データ、他ステージの変更
 - Rive / Spine / Live2DなどPC専用Editorを前提にする工程
 - mainへの自動マージ
+- AI Game Directorの定期実行
+- AI Game Directorによる複数改善の連続実行
 
 ## 完了したこと
 
@@ -128,6 +144,7 @@ Before合格後:
 - PixiJS Prototype v1を実装し、Androidで共通座標、バッグドラッグ、ドロップ判定、Before→After状態遷移が成立することを確認した。
 - PixiJSのコード図形による人物アートは品質不足と判断し、本番候補から外した。
 - 高品質完成絵 + 独立操作Sprite + PixiJSというレイヤード方式を次の本命として定義した。
+- AI Game Director v1のゲームビジョン、年代別設計、評価基準、安全境界、手動analyze / implementワークフローをPR #41で準備した。
 
 ## 完了時の更新ルール
 
