@@ -42,6 +42,39 @@
 - 総合評価または対象軸が改善せず、別の重要軸を悪化させる変更は採用しない。
 - 判断できない視覚・操作品質はPreviewで人間確認へ送る。
 
+## 実行可能なv1ワークフロー
+
+`.github/workflows/ai-game-director.yml` を手動実行することで、Phase 1を1サイクルだけ動かします。定期実行はまだ行いません。
+
+### analyze
+
+- 最新mainをcheckoutする。
+- 現在openのPR一覧を取得する。
+- `prompts/codex/game-director-v1.md` と設計文書をCodexに読ませる。
+- Codexはread-only sandboxで改善候補を分析し、リポジトリを変更しない。
+- 結果はGitHub Actions Summaryへ出す。
+
+### implement
+
+- 最新mainから `agent/auto-improve-<run-id>` ブランチを作る。
+- open PRと競合しない改善候補を最大3件比較し、1件だけ実装する。
+- Codexはworkspace-write sandboxで作業する。
+- 変更後にworkflow側がCodexとは独立して安全境界と検査を再確認する。
+- 合格した場合だけ専用ブランチをpushし、Draft PRを作る。
+- mainへのmergeは絶対に自動化しない。
+
+### v1の機械的な安全境界
+
+- 1回につき1改善だけ。
+- 変更は最大8ファイル。
+- `.github/workflows/**`、`AGENTS.md`、ゲームビジョン、年代設計、評価基準、自律開発ルール、`package.json`、lockfile、Cloudflare設定は変更禁止。
+- 依存追加、Secret変更、画像生成API、外部サービス導入はプロンプトでも禁止する。
+- `git diff --check`、`npm run typecheck`、`npm test`、`npm run build` をworkflow側で再実行する。
+- 検査失敗時はpush / PR作成を行わない。
+- UIや操作感の最終採否はAndroid Previewで人間が判断する。
+
+このworkflowは `OPENAI_API_KEY` をGitHub Actions Secretからのみ読みます。キーをコードやViteのクライアント環境へ渡しません。
+
 ## 1改善サイクル
 
 1. 最新mainと関連PRを確認する。
@@ -80,11 +113,11 @@
 
 ### Phase 1: 人間承認付き1サイクル
 
-AIが1件だけ改善してPRを作り、人間がAndroid Previewで確認します。
+AIが1件だけ改善してPRを作り、人間がAndroid Previewで確認します。現在の `.github/workflows/ai-game-director.yml` はここだけを対象とします。
 
 ### Phase 2: 3実験まで
 
-1つずつ独立した仮説として最大3実験を行い、悪化した案を残さず、最良候補をPRにまとめます。
+1つずつ独立した仮説として最大3実験を行い、悪化した案を残さず、最良候補をPRにまとめます。Phase 1の実績が溜まるまで実装しません。
 
 ### Phase 3: 定期実行
 
