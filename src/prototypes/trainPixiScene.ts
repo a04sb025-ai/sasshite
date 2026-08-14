@@ -1,12 +1,12 @@
 export const trainPixiScene = {
   canvas: { width: 1024, height: 1536 },
   assets: {
-    background: '/prototypes/train-pixi/background.svg',
-    player: '/prototypes/train-pixi/player.svg',
-    npcStanding: '/prototypes/train-pixi/npc-standing.svg',
-    afterLap: '/prototypes/train-pixi/npc-seated.svg',
-    afterFloor: '/prototypes/train-pixi/npc-seated.svg',
-    bagSprite: '/prototypes/train-pixi/bag.svg',
+    background: '/prototypes/train-pixi/train-before.png',
+    player: '/prototypes/train-pixi/transparent.svg',
+    npcStanding: '/prototypes/train-pixi/transparent.svg',
+    afterLap: '/prototypes/train-pixi/train-after.png',
+    afterFloor: '/prototypes/train-pixi/train-after.png',
+    bagSprite: '/prototypes/train-pixi/train-bag.png',
   },
   artwork: { x: 0, y: 86, width: 1024, height: 1316 },
   bag: {
