@@ -1,5 +1,7 @@
 import type { Scene } from '../types'
 
+export const SESSION_SCENE_LIMIT = 10
+
 export function createSceneOrder(
   source: readonly Scene[],
   previousIds: readonly Scene['id'][] = [],
@@ -7,6 +9,7 @@ export function createSceneOrder(
 ): Scene[] {
   const ending = source.find(scene => scene.id === 'ending')
   const playable = source.filter(scene => scene.id !== 'ending')
+  const playableLimit = SESSION_SCENE_LIMIT - (ending ? 1 : 0)
 
   for (let index = playable.length - 1; index > 0; index -= 1) {
     const swapIndex = Math.floor(random() * (index + 1))
@@ -15,7 +18,8 @@ export function createSceneOrder(
     playable[swapIndex] = current
   }
 
-  const ordered = ending ? [...playable, ending] : playable
+  const selected = playable.slice(0, playableLimit)
+  const ordered = ending ? [...selected, ending] : selected
   const repeated = ordered.length > 2
     && ordered.every((scene, index) => scene.id === previousIds[index])
 
