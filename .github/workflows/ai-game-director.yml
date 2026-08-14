@@ -1,0 +1,210 @@
+name: AI Game Director v1
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Run mode"
+        required: true
+        default: analyze
+        type: choice
+        options:
+          - analyze
+          - implement
+      objective:
+        description: "Optional focus for this single improvement cycle"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ai-game-director-v1
+  cancel-in-progress: false
+
+jobs:
+  game-director:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install project dependencies
+        run: npm ci
+
+      - name: Install Codex CLI
+        run: npm install --global @openai/codex
+
+      - name: Verify required secret
+        run: |
+          if [ -z "${OPENAI_API_KEY:-}" ]; then
+            echo "OPENAI_API_KEY is required. Add it as a GitHub Actions secret before running this workflow." >&2
+            exit 1
+          fi
+
+      - name: Capture current open PRs
+        run: |
+          gh pr list \
+            --repo "${GITHUB_REPOSITORY}" \
+            --state open \
+            --limit 30 \
+            --json number,title,headRefName,baseRefName,url,body \
+            > /tmp/open-prs.json
+
+      - name: Build Game Director prompt
+        env:
+          OBJECTIVE: ${{ inputs.objective }}
+        run: |
+          cp prompts/codex/game-director-v1.md /tmp/game-director-prompt.md
+          {
+            echo
+            echo "## この実行でユーザーが指定した追加目的"
+            if [ -n "${OBJECTIVE:-}" ]; then
+              printf '%s\n' "$OBJECTIVE"
+            else
+              echo "指定なし。リポジトリの現状から最も小さく効果の高い改善を1件選ぶ。"
+            fi
+            echo
+            echo "## 現在openのPR一覧"
+            cat /tmp/open-prs.json
+          } >> /tmp/game-director-prompt.md
+
+      - name: Analyze one improvement
+        if: ${{ inputs.mode == 'analyze' }}
+        run: |
+          codex exec \
+            --ephemeral \
+            --sandbox read-only \
+            --output-last-message /tmp/game-director-result.md \
+            - < /tmp/game-director-prompt.md
+          cat /tmp/game-director-result.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Prepare autonomous improvement branch
+        if: ${{ inputs.mode == 'implement' }}
+        run: |
+          BRANCH="agent/auto-improve-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+
+      - name: Implement exactly one improvement
+        if: ${{ inputs.mode == 'implement' }}
+        run: |
+          codex exec \
+            --ephemeral \
+            --sandbox workspace-write \
+            --output-last-message /tmp/game-director-result.md \
+            - < /tmp/game-director-prompt.md
+
+      - name: Enforce autonomous safety boundaries
+        if: ${{ inputs.mode == 'implement' }}
+        run: |
+          set -euo pipefail
+          git diff --check
+          mapfile -t files < <(git diff --name-only)
+
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "NO_CHANGES=true" >> "$GITHUB_ENV"
+            echo "Codex intentionally produced no repository changes." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          if [ "${#files[@]}" -gt 8 ]; then
+            printf 'Autonomous v1 may change at most 8 files; got %s:\n' "${#files[@]}" >&2
+            printf ' - %s\n' "${files[@]}" >&2
+            exit 1
+          fi
+
+          protected_pattern='^(\.github/workflows/|AGENTS\.md$|docs/game-vision\.md$|docs/age-modes\.md$|docs/evaluation-rubric\.md$|docs/autonomous-development\.md$|package\.json$|package-lock\.json$|wrangler\.jsonc$)'
+          for file in "${files[@]}"; do
+            if [[ "$file" =~ $protected_pattern ]]; then
+              echo "Autonomous v1 attempted to modify protected file: $file" >&2
+              exit 1
+            fi
+          done
+
+          {
+            echo "### Changed files"
+            printf -- '- `%s`\n' "${files[@]}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run independent validation
+        if: ${{ inputs.mode == 'implement' && env.NO_CHANGES != 'true' }}
+        run: |
+          npm run typecheck
+          npm test
+          npm run build
+
+      - name: Commit and push candidate
+        if: ${{ inputs.mode == 'implement' && env.NO_CHANGES != 'true' }}
+        run: |
+          git add -A
+          git commit -m "AI Game Director: one supervised improvement"
+          git push --set-upstream origin "$BRANCH"
+
+      - name: Open draft pull request
+        if: ${{ inputs.mode == 'implement' && env.NO_CHANGES != 'true' }}
+        env:
+          OBJECTIVE: ${{ inputs.objective }}
+        run: |
+          TITLE=$(sed -n 's/^TITLE:[[:space:]]*//p' /tmp/game-director-result.md | head -n 1)
+          if [ -z "$TITLE" ]; then
+            TITLE="AI Game Director supervised improvement"
+          fi
+
+          {
+            echo "## AI Game Director v1"
+            echo
+            echo "This PR was produced by one manually-triggered, supervised autonomous improvement cycle."
+            echo
+            if [ -n "${OBJECTIVE:-}" ]; then
+              echo "Requested focus: ${OBJECTIVE}"
+              echo
+            fi
+            echo '```text'
+            cat /tmp/game-director-result.md
+            echo '```'
+            echo
+            echo "## Safety gates"
+            echo "- One improvement only"
+            echo "- Maximum 8 changed files"
+            echo "- Governance/workflow/dependency files protected"
+            echo "- typecheck, test, and build rerun independently"
+            echo "- Draft PR only; never auto-merge"
+            echo
+            echo "## Human gate"
+            echo "Review the Cloudflare Preview on Android when the change affects gameplay or visuals. Merge only after human approval."
+          } > /tmp/pr-body.md
+
+          gh pr create \
+            --repo "${GITHUB_REPOSITORY}" \
+            --base main \
+            --head "$BRANCH" \
+            --draft \
+            --title "$TITLE" \
+            --body-file /tmp/pr-body.md
+
+          cat /tmp/game-director-result.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Summarize no-change result
+        if: ${{ inputs.mode == 'implement' && env.NO_CHANGES == 'true' }}
+        run: |
+          if [ -f /tmp/game-director-result.md ]; then
+            cat /tmp/game-director-result.md >> "$GITHUB_STEP_SUMMARY"
+          fi
