@@ -36,7 +36,13 @@ GitHubを仕様・進捗・PR状態の唯一の正本として扱います。Cha
 
 - 役割分担と標準フロー: [`docs/development-workflow.md`](./docs/development-workflow.md)
 - 現在地と次のタスク: [`docs/current-plan.md`](./docs/current-plan.md)
+- 自律改善のルール: [`docs/autonomous-development.md`](./docs/autonomous-development.md)
+- ゲームの長期方針: [`docs/game-vision.md`](./docs/game-vision.md)
+- 年代別モード: [`docs/age-modes.md`](./docs/age-modes.md)
+- 改善評価基準: [`docs/evaluation-rubric.md`](./docs/evaluation-rubric.md)
 - Rive導入ルール: [`docs/rive-guidelines.md`](./docs/rive-guidelines.md)
+
+Phase 1の自律改善は GitHub Actions の **AI Game Director v1** を手動実行します。`analyze` は読み取り専用で改善候補だけを出し、`implement` は最新mainから専用ブランチを作って1改善だけ実装・検査し、合格時だけDraft PRを作ります。mainへは自動マージしません。
 
 ユーザーがChatGPTとCodexの間で長い実行ログを手作業で中継することを標準運用にせず、コード・仕様・進捗・CI結果はGitHub上で確認できる状態を優先します。
 
