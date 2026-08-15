@@ -182,6 +182,7 @@ button:focus-visible { outline: 3px solid #b45128; outline-offset: 3px; }
 .result-score { display: flex; align-items: baseline; justify-content: center; gap: 7px; margin: 8px 0 24px; }
 .result-score strong { font-size: 52px; font-weight: 500; line-height: 1; }
 .result-score span { color: #777167; font-size: 14px; }
+.best-score { margin: -14px 0 24px; color: #74452f; font-size: 12px; font-weight: 600; }
 .result-screen h1 { margin: 18px 0; font-size: 25px; }
 .comment { min-height: 48px; font-size: 13px; color: #67635b; }
 .result-mode { margin: -24px 0 28px; color: #777167; font-size: 11px; }
