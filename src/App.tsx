@@ -4,6 +4,7 @@ import { scenes } from './data/scenes'
 import { ageModes, getAgeMode } from './data/ageModes'
 import { applyAction, calculatePlayScore, diagnose, initialScores, scoreAction } from './game/scoring'
 import { createSceneOrder } from './game/sceneOrder'
+import { advanceSession } from './game/sessionProgress'
 import type { Action, AgeModeId, GameRecord, Scores } from './types'
 
 type Screen = 'title' | 'game' | 'result'
@@ -32,8 +33,9 @@ export default function App() {
     const scene = playScenes[index]
     setScores(current => applyAction(current, action))
     setRecords(current => [...current, { scene: scene.eyebrow, action: action.history, score: scoreAction(scene, action) }])
-    if (index === playScenes.length - 1) setScreen('result')
-    else setIndex(current => current + 1)
+    const progress = advanceSession(index, playScenes.length)
+    if (progress.completed) setScreen('result')
+    else setIndex(progress.nextIndex)
   }
 
   if (screen === 'title') return <main className="title-screen">
