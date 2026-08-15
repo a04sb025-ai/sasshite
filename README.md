@@ -37,12 +37,15 @@ GitHubを仕様・進捗・PR状態の唯一の正本として扱います。Cha
 - 役割分担と標準フロー: [`docs/development-workflow.md`](./docs/development-workflow.md)
 - 現在地と次のタスク: [`docs/current-plan.md`](./docs/current-plan.md)
 - 自律改善のルール: [`docs/autonomous-development.md`](./docs/autonomous-development.md)
+- 低コスト自律改善キュー: [`docs/automation/low-cost-backlog.md`](./docs/automation/low-cost-backlog.md)
 - ゲームの長期方針: [`docs/game-vision.md`](./docs/game-vision.md)
 - 年代別モード: [`docs/age-modes.md`](./docs/age-modes.md)
 - 改善評価基準: [`docs/evaluation-rubric.md`](./docs/evaluation-rubric.md)
 - Rive導入ルール: [`docs/rive-guidelines.md`](./docs/rive-guidelines.md)
 
-Phase 1の自律改善は GitHub Actions の **AI Game Director v1** を手動実行します。`analyze` は読み取り専用で改善候補だけを出し、`implement` は最新mainから専用ブランチを作って1改善だけ実装・検査し、合格時だけDraft PRを作ります。mainへは自動マージしません。
+GitHub Actions の **AI Game Director v2 low-cost** は毎時preflightを行いますが、毎時OpenAI APIを呼ぶわけではありません。通常の毎時チェックはGitHub上のCI・未処理PR・低コストbacklogだけを確認し、API利用は最大4枠/日に制限します。定期AI実行には `gpt-5.6-luna` を使い、非Visualの厳格なallowlist内で1改善だけ実装・検査します。
+
+定期実行の安全範囲を通った非Visual変更は、mainへ直接pushせずPRを作ってから自動反映できます。Visual / UI / Art / 問題内容 / 年代別シチュエーション / Image API / Secret / 課金等は定期自動反映の対象外です。手動 `analyze` / `implement` も残し、手動implementはDraft PRで止めます。
 
 ユーザーがChatGPTとCodexの間で長い実行ログを手作業で中継することを標準運用にせず、コード・仕様・進捗・CI結果はGitHub上で確認できる状態を優先します。
 
@@ -75,19 +78,19 @@ CloudflareのGit連携を使う場合は、ビルドコマンドを `npm run bui
 
 ### 場面画像の生成
 
-画像生成はAPI料金とバイナリ差分を伴うため、GitHub Actionsの **Generate scene artwork** を必要なときだけ手動実行します。`push` やデプロイでは自動実行しません。
+画像生成はAPI料金とバイナリ差分を伴うため、GitHub Actionsの **Generate scene artwork** を必要なときだけ手動実行します。`push` やAI Game Directorの定期実行では自動実行しません。
 
 1. GitHub Actions Secret に `OPENAI_API_KEY` を登録します。
 2. **Generate scene artwork** を `workflow_dispatch` で手動実行します。
 3. 生成結果は `generated-scene-art` artifact としてダウンロードします。
-4. 人間が5枚を確認した後、採用する画像だけを `public/scene-art/` へコピーし、通常の別コミットまたは別PRで反映します。
+4. 人間が生成結果を確認した後、採用する画像だけを `public/scene-art/` へコピーし、通常の別コミットまたは別PRで反映します。
 
 - ワークフロー: `.github/workflows/generate-scene-art.yml`
 - プロンプト: `prompts/imagegen/`
 - artifact生成先: `output/imagegen/scene-art/`
 - アプリで使う採用画像: `public/scene-art/`
 
-Actionsは `contents: read` のみで、生成画像を実行ブランチへ自動pushしません。`OPENAI_API_KEY` はActions Secretから画像生成CLIへだけ渡し、Vite/Reactのクライアント環境変数にはしません。`VITE_OPENAI_API_KEY` のような公開バンドルへ入るキーは作成しないでください。
+Actionsは生成画像を自動採用・自動pushしません。`OPENAI_API_KEY` はActions Secretから必要なCLIへだけ渡し、Vite/Reactのクライアント環境変数にはしません。`VITE_OPENAI_API_KEY` のような公開バンドルへ入るキーは作成しないでください。
 
 ## Ver.0.6の範囲
 
