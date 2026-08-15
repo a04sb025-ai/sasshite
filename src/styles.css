@@ -201,7 +201,8 @@ button:focus-visible { outline: 3px solid #b45128; outline-offset: 3px; }
 .player-hit:focus-visible,
 .scene-hit:focus-visible { z-index: 30; }
 
-.reaction { height: 42px; display: grid; place-items: center; text-align: center; font-size: 13px; letter-spacing: .04em; }
+.reaction { min-height: 42px; display: flex; align-items: center; justify-content: center; gap: 10px; text-align: center; font-size: 13px; letter-spacing: .04em; }
+.reaction strong { flex: none; padding: 3px 7px; border-radius: 999px; background: #e7d8c1; color: #74452f; font-size: 11px; letter-spacing: 0; white-space: nowrap; }
 .timer { height: 2px; background: #d8d0c1; }
 .timer i { display: block; height: 100%; background: #6f7769; animation: drain linear forwards; }
 @keyframes drain { from { width: 100%; } to { width: 0; } }
@@ -226,14 +227,15 @@ button:focus-visible { outline: 3px solid #b45128; outline-offset: 3px; }
 @media (max-width: 340px) {
   .game-screen { padding-inline: 10px; }
   .scene-header { height: 48px; }
-  .reaction { height: 38px; font-size: 12px; }
+  .reaction { min-height: 38px; gap: 6px; font-size: 12px; }
+  .reaction strong { padding-inline: 5px; font-size: 10px; }
 }
 
 @media (max-height: 650px) {
   .game-screen { padding-top: 10px; }
   .scene-header { height: 42px; }
   .art { max-height: calc(100dvh - 112px); }
-  .reaction { height: 34px; }
+  .reaction { min-height: 34px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

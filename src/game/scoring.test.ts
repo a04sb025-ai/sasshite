@@ -38,6 +38,13 @@ describe('Ver.0.6 game model', () => {
     expect(calculatePlayScore(records)).toBe(100)
     expect(calculatePlayScore([])).toBe(0)
   })
+  it('gives distinct immediate feedback scores when a scene has different action impacts', () => {
+    const sampleScenes = ageModes.flatMap(mode => mode.scenes)
+
+    expect(sampleScenes.every(scene =>
+      new Set(scene.actions.map(action => scoreAction(scene, action))).size > 1,
+    )).toBe(true)
+  })
   it('models all age modes and exposes only reviewed representative samples', () => {
     expect(ageModes).toHaveLength(7)
     expect(ageModes.filter(mode => mode.status === 'sample').map(mode => mode.id)).toEqual([
