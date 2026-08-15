@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { scenes } from '../data/scenes'
 import { ageModes } from '../data/ageModes'
+import { awaitingReviewedArtworkSceneIds } from '../data/scenePresentationPolicy'
 import { directInteractionActionIds, directInteractionSceneIds } from '../components/SceneArtwork'
 import { applyAction, calculatePlayScore, describeReplayFocus, describeScoreChange, diagnose, initialScores, scoreAction } from './scoring'
 
@@ -94,16 +95,13 @@ describe('Ver.0.6 game model', () => {
       && scene.presentation.choices.length >= 2
       && scene.actions.some(action => action.id === 'wait'),
     )).toBe(true)
-    expect(directInteractionSceneIds).toContain('kindergarten-blocks')
-    expect(directInteractionActionIds['kindergarten-blocks']).toEqual(['share', 'finish-first'])
-    expect(kindergarten?.scenes[0].actions.filter(action => action.id !== 'wait').map(action => action.id))
-      .toEqual(directInteractionActionIds['kindergarten-blocks'])
+    expect(awaitingReviewedArtworkSceneIds).toContain('kindergarten-blocks')
     expect(directInteractionSceneIds).toContain('kindergarten-playhouse')
     expect(directInteractionActionIds['kindergarten-playhouse']).toEqual(['invite', 'bring-toy', 'keep-playing'])
     expect(kindergarten?.scenes[1].actions.filter(action => action.id !== 'wait').map(action => action.id))
       .toEqual(directInteractionActionIds['kindergarten-playhouse'])
   })
-  it('offers multiple junior-high situations with distinct settings', () => {
+  it('offers multiple junior-high situations with distinct settings while unreviewed art stays gated', () => {
     const juniorHigh = ageModes.find(mode => mode.id === 'junior-high')
 
     expect(juniorHigh?.scenes).toHaveLength(2)
@@ -113,23 +111,17 @@ describe('Ver.0.6 game model', () => {
       && scene.presentation.choices.length >= 3
       && scene.actions.some(action => action.id === 'wait'),
     )).toBe(true)
-    expect(directInteractionSceneIds).toContain('junior-high-cleanup')
-    expect(directInteractionActionIds['junior-high-cleanup']).toEqual(['help', 'invite', 'leave'])
-    expect(juniorHigh?.scenes[0].actions.filter(action => action.id !== 'wait').map(action => action.id))
-      .toEqual(directInteractionActionIds['junior-high-cleanup'])
-    expect(directInteractionSceneIds).toContain('junior-high-break')
-    expect(directInteractionActionIds['junior-high-break']).toEqual(['make-room', 'talk-later', 'keep-talking'])
-    expect(juniorHigh?.scenes[1].actions.filter(action => action.id !== 'wait').map(action => action.id))
-      .toEqual(directInteractionActionIds['junior-high-break'])
+    expect(awaitingReviewedArtworkSceneIds).toEqual(expect.arrayContaining([
+      'junior-high-cleanup',
+      'junior-high-break',
+    ]))
   })
-  it('makes the representative working-adult situation directly interactive', () => {
+  it('keeps the representative working-adult situation on choice fallback until reviewed art exists', () => {
     const workingAdult = ageModes.find(mode => mode.id === 'working-adult')
     const documents = workingAdult?.scenes.find(scene => scene.id === 'working-adult-documents')
 
     expect(documents).toBeDefined()
-    expect(directInteractionSceneIds).toContain('working-adult-documents')
-    expect(directInteractionActionIds['working-adult-documents']).toEqual(['help', 'ask', 'prepare'])
-    expect(documents?.actions.filter(action => action.id !== 'wait').map(action => action.id))
-      .toEqual(directInteractionActionIds['working-adult-documents'])
+    expect(documents?.presentation?.choices.length).toBeGreaterThanOrEqual(3)
+    expect(awaitingReviewedArtworkSceneIds).toContain('working-adult-documents')
   })
 })

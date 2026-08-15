@@ -28,6 +28,7 @@ GitHub上の最新状態とリポジトリ内文書を正本とし、会話履�
 - 進行中PRと競合しない改善候補を最大3件挙げる。
 - 期待効果、対象評価軸、公開品質への寄与、変更範囲、回帰リスクを比較する。
 - 最も小さく検証しやすく、公開品質への効果が高い1件だけを選ぶ。
+- **人間確認済みのローカル画像アセットがない場面を、文章選択から画像内操作へ変換する案は選ばない。** その場面の見た目改善が最重要でも、Game Directorでは実装せず別の安全な候補を選ぶ。代替がなければ `NO_CHANGE` とする。
 
 ### 2. Reviewer
 
@@ -48,6 +49,9 @@ GitHub上の最新状態とリポジトリ内文書を正本とし、会話履�
 - 進行中PRで扱っている箇所は、目的が明示的にそこを対象としていない限り触らない。
 - 依存パッケージを追加しない。
 - 画像生成APIを呼ばない。
+- **CSS / HTML / SVGの丸・矩形・疑似要素などで、人物や背景を「本番用の絵」として新規作成しない。** これは操作検証用の仮素材に限る。
+- **既存の文章選択UIを、低品質なコード描画の人物・背景へ置き換えない。** 画像内操作への昇格は、人間が目視合格したローカル画像アセットとPreview確認を前提とする。
+- `src/components/SceneArtwork.tsx`、`src/components/PlayroomScene.tsx`、`src/styles.css`、`src/assets/scenes/**`、`src/prototypes/**` は人間のVisualレビュー対象なので変更しない。
 - 外部サービス、課金、広告、ユーザーデータ保存を追加しない。
 - 子ども向け安全設計を緩和しない。
 - ガバナンス文書やworkflowを書き換えない。
@@ -60,7 +64,7 @@ GitHub上の最新状態とリポジトリ内文書を正本とし、会話履�
 
 変更前後を同じ評価軸で比較し、テスト成功だけで改善とは判定しない。改善したと合理的に判断できない場合は変更をrevertし、`NO_CHANGE` とする。
 
-視覚・操作感を自動で断定できない場合は残るリスクとして明示する。ただし安全範囲の自律実行では、そのリスクが公開を妨げる重大度でないと合理的に判断でき、独立検査が通るなら候補を残してよい。
+視覚・操作感を自動で断定できない場合は残るリスクとして明示する。**Visual品質を人間が確認できない変更を「完成した絵」「公開品質の向上」と自己判定しない。**
 
 ## 変更禁止範囲
 
@@ -71,12 +75,18 @@ GitHub上の最新状態とリポジトリ内文書を正本とし、会話履�
 - `docs/evaluation-rubric.md`
 - `docs/autonomous-development.md`
 - `docs/release-readiness.md`
+- `docs/prototype-milestone.md`
 - `package.json`
 - `package-lock.json`
 - `wrangler.jsonc`
 - `prompts/imagegen/**`
 - `scripts/imagegen/**`
 - `public/**`
+- `src/components/SceneArtwork.tsx`
+- `src/components/PlayroomScene.tsx`
+- `src/styles.css`
+- `src/assets/scenes/**`
+- `src/prototypes/**`
 - Secret / API key関連
 
 ## サイズ制限
@@ -106,4 +116,4 @@ HUMAN_CHECK: <人間が見るなら何を見るか。不要なら NONE>
 RISKS: <残るリスク>
 ```
 
-自分でmainを直接編集しないこと。mainへの反映可否はworkflow側の独立安全ゲートに委ねること。本番へ直接デプロイしないこと。
+自分でmainを直接編集しないこと。実装候補はworkflowがDraft PRとして保存し、人間が差分とPreviewを確認してから反映可否を判断します。本番へ直接デプロイしないこと。
