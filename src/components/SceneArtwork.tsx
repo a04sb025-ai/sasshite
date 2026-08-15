@@ -19,8 +19,9 @@ type Props = { sceneId: Scene['id']; acted: string | null; onAction: (id: string
 type ArtSource = 'generated' | 'fallback'
 type HitBox = { left: number; top: number; width: number; height: number }
 
-export const directInteractionSceneIds = ['kindergarten-blocks', 'kindergarten-playhouse', 'junior-high-cleanup', 'junior-high-break', 'working-adult-documents'] as const
+export const directInteractionSceneIds = ['meeting', 'kindergarten-blocks', 'kindergarten-playhouse', 'junior-high-cleanup', 'junior-high-break', 'working-adult-documents'] as const
 export const directInteractionActionIds = {
+  meeting: ['mic', 'hand', 'chat'],
   'kindergarten-blocks': ['share', 'finish-first'],
   'kindergarten-playhouse': ['invite', 'bring-toy', 'keep-playing'],
   'junior-high-cleanup': ['help', 'invite', 'leave'],
@@ -286,14 +287,19 @@ function Meeting({ acted, onAction }: Omit<Props, 'sceneId'>) {
     ['hand', '手を挙げる', '挙手', hit.hand],
     ['chat', 'チャットに短い反応を送る', 'チャット', hit.chat],
   ] as const
-  return <SceneShell scene="meeting" fallback={meetingArtwork} className="meeting" label="オンライン会議。司会者が意見を求めたあと、4人が黙って待っている">
-    <>{controls.map(([id, label, fallbackLabel, box]) => <button
+  return <SceneShell scene="meeting" fallback={meetingArtwork} className={`meeting ${acted ? `acted-${acted}` : ''}`} label="オンライン会議。司会者が意見を求めたあと、4人が黙って待っている">
+    <>
+      <span className="meeting-mic-response" aria-hidden="true"><i /><i /><i /></span>
+      <span className="meeting-hand-response" aria-hidden="true">✋</span>
+      <span className="meeting-chat-response" aria-hidden="true">…</span>
+      {controls.map(([id, label, fallbackLabel, box]) => <button
       key={id}
       className={`scene-hit meeting-hit ${acted === id ? 'selected' : ''}`}
       style={hitStyle(box)}
       aria-label={label}
       onClick={() => onAction(id)}
-    ><span className="fallback-control">{fallbackLabel}</span></button>)}</>
+    ><span className="fallback-control">{fallbackLabel}</span></button>)}
+    </>
   </SceneShell>
 }
 

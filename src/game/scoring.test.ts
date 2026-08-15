@@ -5,7 +5,7 @@ import { directInteractionActionIds, directInteractionSceneIds } from '../compon
 import { applyAction, calculatePlayScore, describeReplayFocus, describeScoreChange, diagnose, initialScores, scoreAction } from './scoring'
 
 describe('Ver.0.6 game model', () => {
-  it('provides five direct-interaction scenes and a timeout action', () => {
+  it('provides the five core scenes and a timeout action', () => {
     expect(scenes).toHaveLength(5)
     expect(scenes.every(scene => scene.timeoutMs >= 10_000 && scene.actions.some(item => item.id === 'wait'))).toBe(true)
     expect(scenes.flatMap(scene => scene.actions).every(item => item.history && item.reaction)).toBe(true)
@@ -37,6 +37,15 @@ describe('Ver.0.6 game model', () => {
     })
     expect(calculatePlayScore(records)).toBe(100)
     expect(calculatePlayScore([])).toBe(0)
+  })
+
+  it('maps every active meeting control to a distinct direct interaction', () => {
+    const meeting = scenes.find(scene => scene.id === 'meeting')
+
+    expect(directInteractionSceneIds).toContain('meeting')
+    expect(directInteractionActionIds.meeting).toEqual(['mic', 'hand', 'chat'])
+    expect(meeting?.actions.filter(action => action.id !== 'wait').map(action => action.id))
+      .toEqual(directInteractionActionIds.meeting)
   })
   it('gives distinct immediate feedback scores when a scene has different action impacts', () => {
     const sampleScenes = ageModes.flatMap(mode => mode.scenes)
