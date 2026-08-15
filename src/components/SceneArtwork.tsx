@@ -19,10 +19,11 @@ type Props = { sceneId: Scene['id']; acted: string | null; onAction: (id: string
 type ArtSource = 'generated' | 'fallback'
 type HitBox = { left: number; top: number; width: number; height: number }
 
-export const directInteractionSceneIds = ['kindergarten-blocks', 'kindergarten-playhouse'] as const
+export const directInteractionSceneIds = ['kindergarten-blocks', 'kindergarten-playhouse', 'junior-high-cleanup'] as const
 export const directInteractionActionIds = {
   'kindergarten-blocks': ['share', 'finish-first'],
   'kindergarten-playhouse': ['invite', 'bring-toy', 'keep-playing'],
+  'junior-high-cleanup': ['help', 'invite', 'leave'],
 } as const
 
 export const sceneHitAreas = {
@@ -358,6 +359,32 @@ function KindergartenPlayhouse({ acted, onAction }: Omit<Props, 'sceneId'>) {
   </div>
 }
 
+function JuniorHighCleanup({ acted, onAction }: Omit<Props, 'sceneId'>) {
+  return <div className={`art junior-high-cleanup ${acted ? `acted-${acted}` : ''}`} aria-label="部活のあと。友達が用具を片付け、少し離れた先輩たちは話している">
+    <div className="club-window" aria-hidden="true" />
+    <div className="club-shelf" aria-hidden="true"><i /><i /><i /></div>
+    <div className="club-boxes" aria-hidden="true"><i /><i /><i /></div>
+    <button
+      type="button"
+      className={`cleanup-action friend-cleanup ${acted === 'help' ? 'selected' : ''}`}
+      aria-label="一人で用具を片付けている友達を手伝う"
+      onClick={() => onAction('help')}
+    ><span className="club-student" aria-hidden="true" /></button>
+    <button
+      type="button"
+      className={`cleanup-action seniors-cleanup ${acted === 'invite' ? 'selected' : ''}`}
+      aria-label="話している先輩たちに声をかける"
+      onClick={() => onAction('invite')}
+    ><span className="club-student" aria-hidden="true" /><span className="club-student" aria-hidden="true" /></button>
+    <button
+      type="button"
+      className={`cleanup-action exit-cleanup ${acted === 'leave' ? 'selected' : ''}`}
+      aria-label="出口から先に帰る"
+      onClick={() => onAction('leave')}
+    ><span aria-hidden="true" /></button>
+  </div>
+}
+
 export function SceneArtwork(props: Props) {
   if (props.sceneId === 'train') return <Train {...props} />
   if (props.sceneId === 'elevator') return <Elevator {...props} />
@@ -366,6 +393,7 @@ export function SceneArtwork(props: Props) {
   if (props.sceneId === 'ending') return <Ending {...props} />
   if (props.sceneId === 'kindergarten-blocks') return <KindergartenBlocks {...props} />
   if (props.sceneId === 'kindergarten-playhouse') return <KindergartenPlayhouse {...props} />
+  if (props.sceneId === 'junior-high-cleanup') return <JuniorHighCleanup {...props} />
   const scene = ageModes.flatMap(mode => mode.scenes).find(item => item.id === props.sceneId)
   if (!scene?.presentation) return null
   return <div className="art choice-scene" aria-label={scene.presentation.situation}>

@@ -151,6 +151,33 @@ button:focus-visible { outline: 3px solid #b45128; outline-offset: 3px; }
 .kindergarten-playhouse.acted-keep-playing .house-action { transform: scale(1.08); }
 .kindergarten-playhouse.acted-keep-playing .friend-action { right: 5%; }
 
+.junior-high-cleanup { background: linear-gradient(#d7e3df 0 72%, #b58b62 72%); }
+.club-window { position: absolute; left: 7%; top: 7%; width: 40%; height: 24%; border: 5px solid #596866; background: linear-gradient(90deg, transparent 48%, #596866 48% 52%, transparent 52%), #b9d7df; }
+.club-shelf { position: absolute; left: 7%; bottom: 8%; width: 35%; height: 34%; border: 5px solid #67513f; background: #977457; }
+.club-shelf i { display: block; height: 33%; border-bottom: 4px solid #67513f; }
+.club-boxes { position: absolute; left: 37%; bottom: 9%; width: 25%; height: 20%; }
+.club-boxes i { position: absolute; width: 58%; height: 48%; border: 3px solid #614d3d; background: #c79754; }
+.club-boxes i:nth-child(1) { left: 0; bottom: 0; }
+.club-boxes i:nth-child(2) { right: 0; bottom: 0; }
+.club-boxes i:nth-child(3) { left: 21%; bottom: 42%; }
+.cleanup-action { position: absolute; z-index: 6; min-width: 64px; min-height: 64px; padding: 0; border: 0; background: transparent; touch-action: manipulation; }
+.club-student { position: absolute; width: 46px; height: 80px; border: 3px solid #3f4649; border-radius: 45% 45% 14px 14px; background: #496c87; }
+.club-student::before { content: ""; position: absolute; left: 7px; top: -28px; width: 28px; height: 28px; border: 3px solid #3f4649; border-radius: 50%; background: #e2b68f; }
+.club-student::after { content: ""; position: absolute; left: 9px; top: -23px; width: 28px; height: 12px; border-radius: 80% 50% 20% 20%; background: #3d3835; }
+.friend-cleanup { left: 46%; bottom: 28%; width: 76px; height: 116px; }
+.friend-cleanup .club-student { left: 14px; bottom: 5px; transform: rotate(7deg); }
+.seniors-cleanup { right: 5%; top: 29%; width: 120px; height: 120px; }
+.seniors-cleanup .club-student:first-child { left: 5px; bottom: 5px; }
+.seniors-cleanup .club-student:last-child { right: 5px; bottom: 9px; background: #596a78; }
+.exit-cleanup { right: 4%; bottom: 5%; width: 88px; height: 128px; border: 5px solid #665447; border-bottom: 0; background: #d8c39c; }
+.exit-cleanup span { position: absolute; inset: 9px 8px 0; border-left: 4px solid #665447; background: #eee0bd; }
+.exit-cleanup span::after { content: ""; position: absolute; right: 7px; top: 48%; width: 7px; height: 7px; border-radius: 50%; background: #665447; }
+.cleanup-action.selected { outline: 4px solid #5c4432; outline-offset: 2px; filter: brightness(1.08); }
+.junior-high-cleanup.acted-help .friend-cleanup { left: 34%; transform: rotate(-4deg); }
+.junior-high-cleanup.acted-help .club-boxes i:nth-child(3) { left: -90%; bottom: 20%; }
+.junior-high-cleanup.acted-invite .seniors-cleanup { right: 22%; top: 36%; }
+.junior-high-cleanup.acted-leave .exit-cleanup span { transform: perspective(140px) rotateY(-42deg); transform-origin: left; }
+
 .scene-hit,
 .drop-zone {
   position: absolute;

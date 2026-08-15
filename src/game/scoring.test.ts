@@ -86,5 +86,9 @@ describe('Ver.0.6 game model', () => {
       && scene.presentation.choices.length >= 3
       && scene.actions.some(action => action.id === 'wait'),
     )).toBe(true)
+    expect(directInteractionSceneIds).toContain('junior-high-cleanup')
+    expect(directInteractionActionIds['junior-high-cleanup']).toEqual(['help', 'invite', 'leave'])
+    expect(juniorHigh?.scenes[0].actions.filter(action => action.id !== 'wait').map(action => action.id))
+      .toEqual(directInteractionActionIds['junior-high-cleanup'])
   })
 })
