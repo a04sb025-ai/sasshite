@@ -19,11 +19,12 @@ type Props = { sceneId: Scene['id']; acted: string | null; onAction: (id: string
 type ArtSource = 'generated' | 'fallback'
 type HitBox = { left: number; top: number; width: number; height: number }
 
-export const directInteractionSceneIds = ['kindergarten-blocks', 'kindergarten-playhouse', 'junior-high-cleanup'] as const
+export const directInteractionSceneIds = ['kindergarten-blocks', 'kindergarten-playhouse', 'junior-high-cleanup', 'junior-high-break'] as const
 export const directInteractionActionIds = {
   'kindergarten-blocks': ['share', 'finish-first'],
   'kindergarten-playhouse': ['invite', 'bring-toy', 'keep-playing'],
   'junior-high-cleanup': ['help', 'invite', 'leave'],
+  'junior-high-break': ['make-room', 'talk-later', 'keep-talking'],
 } as const
 
 export const sceneHitAreas = {
@@ -385,6 +386,31 @@ function JuniorHighCleanup({ acted, onAction }: Omit<Props, 'sceneId'>) {
   </div>
 }
 
+function JuniorHighBreak({ acted, onAction }: Omit<Props, 'sceneId'>) {
+  return <div className={`art junior-high-break ${acted ? `acted-${acted}` : ''}`} aria-label="休み時間。友達と話す輪の少し外で、クラスメイトがこちらを見ている">
+    <div className="classroom-board" aria-hidden="true" />
+    <div className="classroom-desks" aria-hidden="true"><i /><i /><i /></div>
+    <button
+      type="button"
+      className={`break-action circle-gap ${acted === 'make-room' ? 'selected' : ''}`}
+      aria-label="会話の輪のすき間をあける"
+      onClick={() => onAction('make-room')}
+    ><span className="break-student" aria-hidden="true" /><span className="break-student" aria-hidden="true" /></button>
+    <button
+      type="button"
+      className={`break-action watching-classmate ${acted === 'talk-later' ? 'selected' : ''}`}
+      aria-label="近くでこちらを見ているクラスメイトに、あとで声をかける"
+      onClick={() => onAction('talk-later')}
+    ><span className="break-student" aria-hidden="true" /></button>
+    <button
+      type="button"
+      className={`break-action talking-friend ${acted === 'keep-talking' ? 'selected' : ''}`}
+      aria-label="話している友達との会話を続ける"
+      onClick={() => onAction('keep-talking')}
+    ><span className="break-student" aria-hidden="true" /></button>
+  </div>
+}
+
 export function SceneArtwork(props: Props) {
   if (props.sceneId === 'train') return <Train {...props} />
   if (props.sceneId === 'elevator') return <Elevator {...props} />
@@ -394,6 +420,7 @@ export function SceneArtwork(props: Props) {
   if (props.sceneId === 'kindergarten-blocks') return <KindergartenBlocks {...props} />
   if (props.sceneId === 'kindergarten-playhouse') return <KindergartenPlayhouse {...props} />
   if (props.sceneId === 'junior-high-cleanup') return <JuniorHighCleanup {...props} />
+  if (props.sceneId === 'junior-high-break') return <JuniorHighBreak {...props} />
   const scene = ageModes.flatMap(mode => mode.scenes).find(item => item.id === props.sceneId)
   if (!scene?.presentation) return null
   return <div className="art choice-scene" aria-label={scene.presentation.situation}>
