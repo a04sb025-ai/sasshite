@@ -15,6 +15,7 @@ export default function App() {
   const [index, setIndex] = useState(0)
   const [scores, setScores] = useState<Scores>(initialScores)
   const [records, setRecords] = useState<GameRecord[]>([])
+  const [previousRecords, setPreviousRecords] = useState<GameRecord[]>([])
   const [playScenes, setPlayScenes] = useState(scenes)
   const [ageModeId, setAgeModeId] = useState<AgeModeId>('working-adult')
   const [bestScore, setBestScore] = useState<number | null>(() => readBestScore(getBestScoreStorage(), 'working-adult'))
@@ -27,6 +28,7 @@ export default function App() {
   const start = () => {
     const source = [...getAgeMode(ageModeId).scenes]
     setPlayScenes(current => createSceneOrder(source, screen === 'result' ? current.map(scene => scene.id) : []))
+    setPreviousRecords(screen === 'result' ? records : [])
     setScores(initialScores)
     setRecords([])
     setIndex(0)
@@ -63,7 +65,11 @@ export default function App() {
       >{mode.label}<small>{mode.status === 'development' ? '開発中' : `${mode.scenes.length}場面`}</small></button>)}</fieldset>
       <button className="text-button" onClick={start}>はじめる</button></div>
   </main>
-  if (screen === 'game') return <GameScene key={playScenes[index].id} scene={playScenes[index]} number={index + 1} total={playScenes.length} onComplete={complete} />
+  if (screen === 'game') {
+    const scene = playScenes[index]
+    const previousScore = previousRecords.find(record => record.scene === scene.eyebrow)?.score ?? null
+    return <GameScene key={scene.id} scene={scene} number={index + 1} total={playScenes.length} previousScore={previousScore} onComplete={complete} />
+  }
 
   const result = ageModeId === 'kindergarten'
     ? { title: 'きょうの えらびかた', comment: 'みたり、うごいたり、まったり。どれも きみが えらんだこと。' }

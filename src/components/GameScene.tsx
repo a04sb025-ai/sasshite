@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { scoreAction } from '../game/scoring'
+import { describeScoreChange, scoreAction } from '../game/scoring'
 import type { Action, Scene } from '../types'
 import TrainPixiPrototype from '../prototypes/TrainPixiPrototype'
 import { PlayroomScene } from './PlayroomScene'
 import { SceneArtwork } from './SceneArtwork'
 
-type Props = { scene: Scene; number: number; total: number; onComplete: (action: Action) => void }
+type Props = { scene: Scene; number: number; total: number; previousScore: number | null; onComplete: (action: Action) => void }
 
-export function GameScene({ scene, number, total, onComplete }: Props) {
+export function GameScene({ scene, number, total, previousScore, onComplete }: Props) {
   const [acted, setActed] = useState<Action | null>(null)
   const actedRef = useRef(false)
   const finish = useCallback((id: string) => {
@@ -34,7 +34,7 @@ export function GameScene({ scene, number, total, onComplete }: Props) {
     <header className="scene-header"><span>{String(number).padStart(2, '0')} / {String(total).padStart(2, '0')}</span><p>{scene.eyebrow}</p></header>
     {artwork}
     <div className="reaction" aria-live="polite">{acted
-      ? <><span>{acted.reaction}</span><strong>察しスコア {scoreAction(scene, acted)}点</strong></>
+      ? <><span>{acted.reaction}</span><strong>察しスコア {scoreAction(scene, acted)}点{previousScore !== null && <small>{describeScoreChange(scoreAction(scene, acted), previousScore)}</small>}</strong></>
       : <span aria-hidden="true">&nbsp;</span>}</div>
     <div className={`timer ${acted ? 'resolved' : ''}`} aria-hidden="true"><i key={scene.id} style={{ animationDuration: `${scene.timeoutMs}ms` }} /></div>
   </main>

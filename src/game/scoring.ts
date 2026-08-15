@@ -22,6 +22,14 @@ export function calculatePlayScore(records: readonly GameRecord[]): number {
   return Math.round(records.reduce((total, record) => total + record.score, 0) / records.length)
 }
 
+export function describeScoreChange(score: number, previousScore: number | null): string {
+  if (previousScore === null) return ''
+
+  const difference = score - previousScore
+  if (difference === 0) return '前回と同じ'
+  return `前回より${difference > 0 ? '+' : ''}${difference}点`
+}
+
 export function describeReplayFocus(records: readonly GameRecord[]): string {
   if (records.length === 0) return ''
   if (records.every(record => record.score === 100)) return '100点達成。今度は、好きな選び方でもう一度。'

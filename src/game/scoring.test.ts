@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { scenes } from '../data/scenes'
 import { ageModes } from '../data/ageModes'
 import { directInteractionActionIds, directInteractionSceneIds } from '../components/SceneArtwork'
-import { applyAction, calculatePlayScore, describeReplayFocus, diagnose, initialScores, scoreAction } from './scoring'
+import { applyAction, calculatePlayScore, describeReplayFocus, describeScoreChange, diagnose, initialScores, scoreAction } from './scoring'
 
 describe('Ver.0.6 game model', () => {
   it('provides five direct-interaction scenes and a timeout action', () => {
@@ -44,6 +44,12 @@ describe('Ver.0.6 game model', () => {
     expect(sampleScenes.every(scene =>
       new Set(scene.actions.map(action => scoreAction(scene, action))).size > 1,
     )).toBe(true)
+  })
+  it('compares replay actions with the previous score without changing the score', () => {
+    expect(describeScoreChange(82, null)).toBe('')
+    expect(describeScoreChange(82, 64)).toBe('前回より+18点')
+    expect(describeScoreChange(64, 82)).toBe('前回より-18点')
+    expect(describeScoreChange(82, 82)).toBe('前回と同じ')
   })
   it('turns the lowest-scoring action into a concrete replay prompt', () => {
     const records = [
