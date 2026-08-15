@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { scenes } from '../data/scenes'
 import { ageModes } from '../data/ageModes'
+import { directInteractionSceneIds } from '../components/SceneArtwork'
 import { applyAction, calculatePlayScore, diagnose, initialScores, scoreAction } from './scoring'
 
 describe('Ver.0.6 game model', () => {
@@ -59,6 +60,7 @@ describe('Ver.0.6 game model', () => {
       && scene.presentation.choices.length >= 2
       && scene.actions.some(action => action.id === 'wait'),
     )).toBe(true)
+    expect(directInteractionSceneIds).toContain('kindergarten-blocks')
   })
   it('offers multiple junior-high situations with distinct settings', () => {
     const juniorHigh = ageModes.find(mode => mode.id === 'junior-high')

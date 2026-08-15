@@ -19,6 +19,8 @@ type Props = { sceneId: Scene['id']; acted: string | null; onAction: (id: string
 type ArtSource = 'generated' | 'fallback'
 type HitBox = { left: number; top: number; width: number; height: number }
 
+export const directInteractionSceneIds = ['kindergarten-blocks'] as const
+
 export const sceneHitAreas = {
   train: {
     player: { left: 9, top: 49, width: 29, height: 34 },
@@ -306,12 +308,33 @@ function Ending({ acted, onAction }: Omit<Props, 'sceneId'>) {
   </SceneShell>
 }
 
+function KindergartenBlocks({ acted, onAction }: Omit<Props, 'sceneId'>) {
+  return <div className="art kindergarten-blocks" aria-label="つみきで遊んでいる子と、そばで見ている友達">
+    <div className="blocks-town" aria-hidden="true"><i /><i /><i /><i /></div>
+    <div className="blocks-child blocks-builder" aria-hidden="true"><span>つくる こ</span></div>
+    <div className="blocks-child blocks-friend" aria-hidden="true"><span>みている こ</span></div>
+    <button
+      type="button"
+      className={`blocks-action share-block ${acted === 'share' ? 'selected' : ''}`}
+      aria-label="つみきを友達へわたす"
+      onClick={() => onAction('share')}
+    ><span aria-hidden="true">▰</span><small>わたす</small></button>
+    <button
+      type="button"
+      className={`blocks-action build-block ${acted === 'finish-first' ? 'selected' : ''}`}
+      aria-label="つみきを町へ置いて、もう少しつくる"
+      onClick={() => onAction('finish-first')}
+    ><span aria-hidden="true">▰</span><small>おく</small></button>
+  </div>
+}
+
 export function SceneArtwork(props: Props) {
   if (props.sceneId === 'train') return <Train {...props} />
   if (props.sceneId === 'elevator') return <Elevator {...props} />
   if (props.sceneId === 'karaage') return <Karaage {...props} />
   if (props.sceneId === 'meeting') return <Meeting {...props} />
   if (props.sceneId === 'ending') return <Ending {...props} />
+  if (props.sceneId === 'kindergarten-blocks') return <KindergartenBlocks {...props} />
   const scene = ageModes.flatMap(mode => mode.scenes).find(item => item.id === props.sceneId)
   if (!scene?.presentation) return null
   return <div className="art choice-scene" aria-label={scene.presentation.situation}>
