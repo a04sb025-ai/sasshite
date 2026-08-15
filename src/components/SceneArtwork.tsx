@@ -20,6 +20,9 @@ type ArtSource = 'generated' | 'fallback'
 type HitBox = { left: number; top: number; width: number; height: number }
 
 export const directInteractionSceneIds = ['kindergarten-blocks'] as const
+export const directInteractionActionIds = {
+  'kindergarten-blocks': ['share', 'finish-first'],
+} as const
 
 export const sceneHitAreas = {
   train: {
@@ -309,22 +312,22 @@ function Ending({ acted, onAction }: Omit<Props, 'sceneId'>) {
 }
 
 function KindergartenBlocks({ acted, onAction }: Omit<Props, 'sceneId'>) {
-  return <div className="art kindergarten-blocks" aria-label="つみきで遊んでいる子と、そばで見ている友達">
+  return <div className={`art kindergarten-blocks ${acted ? `acted-${acted}` : ''}`} aria-label="つみきで遊んでいる子と、そばで見ている友達">
     <div className="blocks-town" aria-hidden="true"><i /><i /><i /><i /></div>
-    <div className="blocks-child blocks-builder" aria-hidden="true"><span>つくる こ</span></div>
-    <div className="blocks-child blocks-friend" aria-hidden="true"><span>みている こ</span></div>
+    <div className="blocks-child blocks-builder" aria-hidden="true" />
+    <div className="blocks-child blocks-friend" aria-hidden="true" />
     <button
       type="button"
       className={`blocks-action share-block ${acted === 'share' ? 'selected' : ''}`}
       aria-label="つみきを友達へわたす"
       onClick={() => onAction('share')}
-    ><span aria-hidden="true">▰</span><small>わたす</small></button>
+    ><span aria-hidden="true" /></button>
     <button
       type="button"
       className={`blocks-action build-block ${acted === 'finish-first' ? 'selected' : ''}`}
       aria-label="つみきを町へ置いて、もう少しつくる"
       onClick={() => onAction('finish-first')}
-    ><span aria-hidden="true">▰</span><small>おく</small></button>
+    ><span aria-hidden="true" /></button>
   </div>
 }
 

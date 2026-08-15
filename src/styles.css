@@ -101,9 +101,9 @@ button:focus-visible { outline: 3px solid #b45128; outline-offset: 3px; }
   background: #d47a55;
 }
 .blocks-child::before { content: ""; position: absolute; left: 18%; top: -38%; width: 64%; aspect-ratio: 1; border: 3px solid #51463b; border-radius: 50%; background: #efc595; }
-.blocks-child span { position: absolute; top: 108%; left: 50%; width: 80px; transform: translateX(-50%); text-align: center; font-size: 11px; font-weight: 600; }
 .blocks-builder { left: 8%; }
 .blocks-friend { right: 8%; background: #6fa0b4; }
+.blocks-child::after { content: ""; position: absolute; left: 34%; top: -17%; width: 32%; height: 9%; border-bottom: 3px solid #51463b; border-radius: 0 0 50% 50%; }
 .blocks-action {
   position: absolute;
   z-index: 6;
@@ -116,11 +116,14 @@ button:focus-visible { outline: 3px solid #b45128; outline-offset: 3px; }
   box-shadow: 0 5px 0 #8f6d3d;
   touch-action: manipulation;
 }
-.blocks-action span { display: block; font-size: 30px; line-height: .8; color: #d86f4a; }
-.blocks-action small { display: block; margin-top: 5px; font-size: 12px; font-weight: 700; }
+.blocks-action span { display: block; width: 38px; height: 24px; margin: auto; border: 3px solid #654b35; border-radius: 4px; background: #d86f4a; }
 .share-block { right: 16%; bottom: 13%; }
 .build-block { left: 42%; bottom: 7%; }
 .blocks-action.selected { transform: translateY(5px); box-shadow: none; background: #fff5c9; outline: 4px solid #5c4432; }
+.kindergarten-blocks.acted-share .blocks-friend { right: 14%; transform: rotate(-4deg); background: #79ad91; }
+.kindergarten-blocks.acted-share .share-block { right: 22%; bottom: 32%; }
+.kindergarten-blocks.acted-finish-first .blocks-town i:nth-child(4) { bottom: 66%; transform: rotate(0); }
+.kindergarten-blocks.acted-finish-first .build-block { left: 48%; bottom: 32%; }
 
 .scene-hit,
 .drop-zone {
