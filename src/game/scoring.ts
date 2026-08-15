@@ -22,6 +22,14 @@ export function calculatePlayScore(records: readonly GameRecord[]): number {
   return Math.round(records.reduce((total, record) => total + record.score, 0) / records.length)
 }
 
+export function describeReplayFocus(records: readonly GameRecord[]): string {
+  if (records.length === 0) return ''
+  if (records.every(record => record.score === 100)) return '100点達成。今度は、好きな選び方でもう一度。'
+
+  const focus = records.reduce((lowest, record) => record.score < lowest.score ? record : lowest)
+  return `次は「${focus.scene}」で、別の動きも試してみよう。`
+}
+
 export function diagnose(scores: Scores) {
   if (scores.hesitation >= 35 && scores.awareness >= 58) return { title: '気づいているけど動かない人', comment: '見えているからこそ、ひと呼吸。間もあなたの選択です。' }
   if (scores.awareness >= 75 && scores.kindness >= 70) return { title: '察しすぎてちょっと疲れる人', comment: '小さな気配まで、いつの間にか拾っています。' }

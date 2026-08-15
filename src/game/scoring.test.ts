@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { scenes } from '../data/scenes'
 import { ageModes } from '../data/ageModes'
 import { directInteractionActionIds, directInteractionSceneIds } from '../components/SceneArtwork'
-import { applyAction, calculatePlayScore, diagnose, initialScores, scoreAction } from './scoring'
+import { applyAction, calculatePlayScore, describeReplayFocus, diagnose, initialScores, scoreAction } from './scoring'
 
 describe('Ver.0.6 game model', () => {
   it('provides five direct-interaction scenes and a timeout action', () => {
@@ -44,6 +44,18 @@ describe('Ver.0.6 game model', () => {
     expect(sampleScenes.every(scene =>
       new Set(scene.actions.map(action => scoreAction(scene, action))).size > 1,
     )).toBe(true)
+  })
+  it('turns the lowest-scoring action into a concrete replay prompt', () => {
+    const records = [
+      { scene: 'エレベーター', action: '開ボタンを押した', score: 100 },
+      { scene: '帰り際', action: '少し待った', score: 47 },
+      { scene: '会議中', action: '先に話した', score: 47 },
+    ]
+
+    expect(describeReplayFocus(records)).toBe('次は「帰り際」で、別の動きも試してみよう。')
+    expect(describeReplayFocus(records.map(record => ({ ...record, score: 100 }))))
+      .toBe('100点達成。今度は、好きな選び方でもう一度。')
+    expect(describeReplayFocus([])).toBe('')
   })
   it('models all age modes and exposes only reviewed representative samples', () => {
     expect(ageModes).toHaveLength(7)

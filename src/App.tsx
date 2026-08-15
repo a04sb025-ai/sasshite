@@ -2,7 +2,7 @@ import { useLayoutEffect, useState } from 'react'
 import { GameScene } from './components/GameScene'
 import { scenes } from './data/scenes'
 import { ageModes, getAgeMode } from './data/ageModes'
-import { applyAction, calculatePlayScore, diagnose, initialScores, scoreAction } from './game/scoring'
+import { applyAction, calculatePlayScore, describeReplayFocus, diagnose, initialScores, scoreAction } from './game/scoring'
 import { createSceneOrder } from './game/sceneOrder'
 import { advanceSession } from './game/sessionProgress'
 import { describeBestScore, getBestScoreStorage, readBestScore, recordBestScore } from './game/bestScore'
@@ -74,6 +74,7 @@ export default function App() {
     <p className="best-score">{describeBestScore(playScore, bestScore ?? playScore, improvedBest)}</p>
     <h1>「{result.title}」</h1><p className="comment">{result.comment}</p>
     <section className="history" aria-labelledby="history-title"><h2 id="history-title">あのとき、あなたは</h2><ol>{records.map(record => <li key={record.scene}><span>{record.scene}</span><p>{record.action}</p><strong>{record.score}点</strong></li>)}</ol></section>
+    <p className="replay-focus">{describeReplayFocus(records)}</p>
     <p className="result-mode">{getAgeMode(ageModeId).label}・{playScenes.length}場面のサンプル</p>
     <button className="text-button" onClick={start}>{playScenes.length > 2 ? '順番を変えてもう一度' : 'もう一度'}</button>
   </main>

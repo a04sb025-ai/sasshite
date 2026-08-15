@@ -296,7 +296,7 @@ button:focus-visible { outline: 3px solid #b45128; outline-offset: 3px; }
 .best-score { margin: -14px 0 24px; color: #74452f; font-size: 12px; font-weight: 600; }
 .result-screen h1 { margin: 18px 0; font-size: 25px; }
 .comment { min-height: 48px; font-size: 13px; color: #67635b; }
-.result-mode { margin: -24px 0 28px; color: #777167; font-size: 11px; }
+.result-mode { margin: 0 0 28px; color: #777167; font-size: 11px; }
 .history { width: min(100%, 360px); margin: 40px auto; padding-top: 20px; text-align: left; border-top: 1px solid #c9c1b2; }
 .history h2 { margin: 0 0 18px; font-size: 13px; font-weight: 400; letter-spacing: .13em; }
 .history ol { margin: 0; padding: 0; list-style: none; }
@@ -304,6 +304,7 @@ button:focus-visible { outline: 3px solid #b45128; outline-offset: 3px; }
 .history span { font-size: 11px; color: #777167; }
 .history p { margin: 0; font-size: 12px; }
 .history strong { color: #67635b; font-size: 11px; font-weight: 500; white-space: nowrap; }
+.replay-focus { width: min(100%, 360px); margin: -20px auto 20px; padding: 12px 14px; border-radius: 8px; background: #eee2cf; color: #5f493a; font-size: 12px; line-height: 1.6; }
 
 @media (max-width: 340px) {
   .game-screen { padding-inline: 10px; }
