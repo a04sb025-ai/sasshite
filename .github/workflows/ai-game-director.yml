@@ -24,9 +24,11 @@ on:
         required: false
         type: string
   schedule:
-    # GitHub wakes the director every hour. The preflight below uses no OpenAI
-    # API and only allows an AI call in four fixed JST windows per day.
+    # Free watcher: wakes every hour and never calls OpenAI by itself.
     - cron: "17 * * * *"
+    # Paid candidate slots: exactly four cron triggers/day (03:47, 09:47,
+    # 15:47, 21:47 JST). Preflight can still skip them.
+    - cron: "47 0,6,12,18 * * *"
 
 permissions:
   contents: write
@@ -66,6 +68,7 @@ jobs:
           INPUT_MODE: ${{ inputs.mode }}
           INPUT_MODEL_TIER: ${{ inputs.model_tier }}
           INPUT_OBJECTIVE: ${{ inputs.objective }}
+          SCHEDULE_TRIGGER: ${{ github.event.schedule }}
         run: |
           set -euo pipefail
 
@@ -104,14 +107,9 @@ jobs:
             AI_REASONING="low"
             AUTO_PUBLISH=true
 
-            JST_HOUR=$(TZ=Asia/Tokyo date +%H)
-            case "$JST_HOUR" in
-              03|09|15|21)
-                ;;
-              *)
-                REASON="free hourly check only; next AI window is one of 03/09/15/21 JST"
-                ;;
-            esac
+            if [ "${SCHEDULE_TRIGGER:-}" != "47 0,6,12,18 * * *" ]; then
+              REASON="free hourly watcher only; this cron trigger never starts a paid AI run"
+            fi
 
             if [ -z "$REASON" ] && [ "$PENDING_DIRECTOR_PRS" -gt 0 ]; then
               REASON="an AI Game Director PR is still open, so no new paid run is started"
@@ -149,10 +147,11 @@ jobs:
           {
             echo "## Low-cost hourly preflight"
             echo "- Event: ${GITHUB_EVENT_NAME}"
+            echo "- Schedule trigger: ${SCHEDULE_TRIGGER:-manual}"
             echo "- Pending Director PRs: ${PENDING_DIRECTOR_PRS}"
             echo "- Latest main CI: ${CI_STATUS}/${CI_CONCLUSION}"
             echo "- Backlog candidate: ${BACKLOG_ITEM:-none}"
-            echo "- OpenAI call this hour: ${RUN_AI}"
+            echo "- OpenAI call this run: ${RUN_AI}"
             echo "- Model if called: ${AI_MODEL} (${AI_REASONING})"
             echo "- Auto publish safe change: ${AUTO_PUBLISH}"
             if [ -n "$REASON" ]; then echo "- Skip/decision reason: ${REASON}"; fi
