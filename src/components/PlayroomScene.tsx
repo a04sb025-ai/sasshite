@@ -9,25 +9,25 @@ type Point = { x: number; y: number }
 
 const friendDropStyle: CSSProperties = {
   position: 'absolute',
-  left: '58%',
-  top: '34%',
-  width: '37%',
-  height: '55%',
+  left: '63%',
+  top: '28%',
+  width: '33%',
+  height: '63%',
 }
 
 const playDropStyle: CSSProperties = {
   position: 'absolute',
-  left: '7%',
-  top: '42%',
-  width: '51%',
-  height: '52%',
+  left: '4%',
+  top: '38%',
+  width: '58%',
+  height: '58%',
 }
 
 const toyStyle: CSSProperties = {
   position: 'absolute',
-  left: '37%',
-  top: '53%',
-  width: '28%',
+  left: '22%',
+  top: '58%',
+  width: '18%',
   aspectRatio: '1 / 1',
 }
 
@@ -45,7 +45,7 @@ export function PlayroomScene({ acted, onAction }: Props) {
   const [offset, setOffset] = useState<Point>({ x: 0, y: 0 })
   const [dragging, setDragging] = useState(false)
   const resolved = acted !== null
-  const positiveAfter = acted === 'bring-toy' || acted === 'invite'
+  const positiveAfter = acted === 'bring-toy'
 
   const resetDrag = (element?: HTMLButtonElement, id?: number) => {
     if (element && id !== undefined) releaseCapture(element, id)
@@ -97,13 +97,14 @@ export function PlayroomScene({ acted, onAction }: Props) {
   return <div
     className="art playroom-image-scene"
     aria-label="おへやで遊んでいる子と、少し離れてその様子を見ている子がいる"
-    style={{ position: 'relative' }}
+    style={{ position: 'relative', aspectRatio: '3 / 2', maxHeight: 'none', background: '#e9c779' }}
   >
     <img
       className="scene-background"
       src={positiveAfter ? '/scene-art/playroom-after.png' : '/scene-art/playroom-before.png'}
       alt=""
       draggable={false}
+      style={{ objectFit: 'contain', objectPosition: 'center center', background: '#e9c779' }}
     />
 
     {!resolved && <>
@@ -125,8 +126,10 @@ export function PlayroomScene({ acted, onAction }: Props) {
           background: 'transparent',
           touchAction: 'none',
           cursor: dragging ? 'grabbing' : 'grab',
-          transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${dragging ? 1.06 : 1})`,
-          filter: dragging ? 'drop-shadow(0 5px 7px rgba(0,0,0,.24))' : 'none',
+          transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${dragging ? 1.04 : 1})`,
+          transformOrigin: 'center center',
+          filter: dragging ? 'drop-shadow(0 5px 7px rgba(0,0,0,.22))' : 'none',
+          transition: dragging ? 'none' : 'transform 120ms ease, filter 120ms ease',
           zIndex: dragging ? 20 : 8,
         }}
       >
