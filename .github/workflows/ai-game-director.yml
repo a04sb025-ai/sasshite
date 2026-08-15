@@ -15,22 +15,15 @@ on:
         description: "Optional focus for this single improvement cycle"
         required: false
         type: string
-      auto_merge:
-        description: "Publish directly to main when all safe-scope gates pass"
-        required: true
-        default: false
-        type: boolean
-  schedule:
-    - cron: "20 * * * *"
 
 permissions:
   contents: write
-  pull-requests: read
+  pull-requests: write
 
-# Only one autonomous main writer may run at once. This prevents two valid
-# candidates from racing while still letting the hourly lane rotation proceed.
+# Phase 1 is manual-only. One candidate may be prepared at a time, and every
+# implementation is reviewed through a Draft PR before main changes.
 concurrency:
-  group: ai-game-director-main-writer
+  group: ai-game-director-candidate
   cancel-in-progress: false
 
 jobs:
@@ -70,25 +63,10 @@ jobs:
       - name: Resolve run policy
         env:
           INPUT_MODE: ${{ inputs.mode }}
-          INPUT_AUTO_MERGE: ${{ inputs.auto_merge }}
           INPUT_OBJECTIVE: ${{ inputs.objective }}
         run: |
-          if [ "${GITHUB_EVENT_NAME}" = "schedule" ]; then
-            echo "RUN_MODE=implement" >> "$GITHUB_ENV"
-            echo "AUTO_MERGE=true" >> "$GITHUB_ENV"
-            HOUR=$(date -u +%H)
-            case $((10#$HOUR % 4)) in
-              0) LANE="CORE: prioritize age selection, session state, randomized roughly-10-question play, and reliable end-to-end progression." ;;
-              1) LANE="REPLAY: prioritize scoring, 100-point results, local personal best, replay flow, and meaningful action-to-score feedback." ;;
-              2) LANE="CONTENT: prioritize representative safe scenarios for kindergarten, junior-high, and working-adult modes, with clear age differences. Add only a small reviewed batch." ;;
-              3) LANE="UX: prioritize mobile clarity, immediate interaction feedback, comprehensible outcomes, and removal of blockers that make the prototype hard to play." ;;
-            esac
-            echo "OBJECTIVE=OVERNIGHT PROTOTYPE SPRINT. $LANE Read docs/prototype-milestone.md and docs/release-readiness.md. Work on the highest-priority unmet milestone in this lane. Implement one coherent improvement and keep it safe for automatic publication to main." >> "$GITHUB_ENV"
-          else
-            echo "RUN_MODE=${INPUT_MODE:-analyze}" >> "$GITHUB_ENV"
-            echo "AUTO_MERGE=${INPUT_AUTO_MERGE:-false}" >> "$GITHUB_ENV"
-            echo "OBJECTIVE=${INPUT_OBJECTIVE:-}" >> "$GITHUB_ENV"
-          fi
+          echo "RUN_MODE=${INPUT_MODE:-analyze}" >> "$GITHUB_ENV"
+          echo "OBJECTIVE=${INPUT_OBJECTIVE:-}" >> "$GITHUB_ENV"
 
       - name: Capture current open PRs
         run: |
@@ -118,7 +96,7 @@ jobs:
       - name: Prepare autonomous improvement branch
         if: ${{ env.RUN_MODE == 'implement' }}
         run: |
-          BRANCH="agent/auto-improve-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          BRANCH="agent/review-improve-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -142,14 +120,14 @@ jobs:
             echo "Codex produced no repository changes." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          if [ "${#files[@]}" -gt 12 ]; then
-            echo "Autonomous cycle exceeded 12-file prototype limit." >&2
+          if [ "${#files[@]}" -gt 8 ]; then
+            echo "Autonomous cycle exceeded 8-file limit." >&2
             exit 1
           fi
-          protected_pattern='^(\.github/workflows/|AGENTS\.md$|docs/game-vision\.md$|docs/age-modes\.md$|docs/evaluation-rubric\.md$|docs/autonomous-development\.md$|docs/release-readiness\.md$|docs/prototype-milestone\.md$|package\.json$|package-lock\.json$|wrangler\.jsonc$|prompts/imagegen/|scripts/imagegen/|public/)'
+          protected_pattern='^(\.github/workflows/|AGENTS\.md$|docs/game-vision\.md$|docs/age-modes\.md$|docs/evaluation-rubric\.md$|docs/autonomous-development\.md$|docs/release-readiness\.md$|docs/prototype-milestone\.md$|package\.json$|package-lock\.json$|wrangler\.jsonc$|prompts/imagegen/|scripts/imagegen/|public/|src/components/SceneArtwork\.tsx$|src/components/PlayroomScene\.tsx$|src/styles\.css$|src/assets/scenes/|src/prototypes/)'
           for file in "${files[@]}"; do
             if [[ "$file" =~ $protected_pattern ]]; then
-              echo "Attempted protected change: $file" >&2
+              echo "Attempted protected or human-visual-review change: $file" >&2
               exit 1
             fi
           done
@@ -169,27 +147,33 @@ jobs:
         if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES != 'true' }}
         run: |
           git add -A
-          git commit -m "AI Game Director: autonomous improvement"
+          git commit -m "AI Game Director: review candidate"
           git fetch origin main
           git rebase origin/main
           npm run typecheck
           npm test
           npm run build
 
-      - name: Publish safe improvement to main
-        if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES != 'true' && env.AUTO_MERGE == 'true' }}
-        run: |
-          # The candidate has already been rebased onto the latest main and passed
-          # all validation twice. A normal non-force push only succeeds if main is
-          # still exactly the expected ancestor; otherwise Git rejects it safely.
-          git push origin HEAD:main
-          echo "Safe-scope autonomous improvement published directly to main." >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Preserve manual candidate branch
-        if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES != 'true' && env.AUTO_MERGE != 'true' }}
+      - name: Push candidate and open Draft PR
+        if: ${{ env.RUN_MODE == 'implement' && env.NO_CHANGES != 'true' }}
         run: |
           git push --set-upstream origin "$BRANCH"
-          echo "Auto publication was disabled; candidate branch preserved as $BRANCH." >> "$GITHUB_STEP_SUMMARY"
+          TITLE=$(sed -n 's/^TITLE:[[:space:]]*//p' /tmp/game-director-result.md | head -n 1)
+          if [ -z "$TITLE" ]; then TITLE="review candidate"; fi
+          {
+            echo "AI Game Director v1 の手動実行で作成した候補です。"
+            echo
+            echo "**mainへは自動反映しません。Preview / 差分確認後に判断してください。**"
+            echo
+            cat /tmp/game-director-result.md
+          } > /tmp/game-director-pr.md
+          gh pr create \
+            --repo "${GITHUB_REPOSITORY}" \
+            --base main \
+            --head "$BRANCH" \
+            --draft \
+            --title "AI Game Director: ${TITLE}" \
+            --body-file /tmp/game-director-pr.md
 
       - name: Summarize result
         if: ${{ always() && env.RUN_MODE == 'implement' }}
