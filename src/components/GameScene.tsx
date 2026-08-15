@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Action, Scene } from '../types'
+import TrainPixiPrototype from '../prototypes/TrainPixiPrototype'
 import { SceneArtwork } from './SceneArtwork'
 
 type Props = { scene: Scene; number: number; total: number; onComplete: (action: Action) => void }
@@ -23,7 +24,9 @@ export function GameScene({ scene, number, total, onComplete }: Props) {
 
   return <main className="game-screen">
     <header className="scene-header"><span>{String(number).padStart(2, '0')} / {String(total).padStart(2, '0')}</span><p>{scene.eyebrow}</p></header>
-    <SceneArtwork sceneId={scene.id} acted={acted?.id ?? null} onAction={finish} />
+    {scene.id === 'train'
+      ? <TrainPixiPrototype embedded disabled={acted !== null} onAction={finish} />
+      : <SceneArtwork sceneId={scene.id} acted={acted?.id ?? null} onAction={finish} />}
     <div className="reaction" aria-live="polite">{acted?.reaction ?? <span aria-hidden="true">&nbsp;</span>}</div>
     <div className="timer" aria-hidden="true"><i key={scene.id} style={{ animationDuration: `${scene.timeoutMs}ms` }} /></div>
   </main>
