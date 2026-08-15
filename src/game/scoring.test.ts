@@ -64,6 +64,10 @@ describe('Ver.0.6 game model', () => {
     expect(directInteractionActionIds['kindergarten-blocks']).toEqual(['share', 'finish-first'])
     expect(kindergarten?.scenes[0].actions.filter(action => action.id !== 'wait').map(action => action.id))
       .toEqual(directInteractionActionIds['kindergarten-blocks'])
+    expect(directInteractionSceneIds).toContain('kindergarten-playhouse')
+    expect(directInteractionActionIds['kindergarten-playhouse']).toEqual(['invite', 'bring-toy', 'keep-playing'])
+    expect(kindergarten?.scenes[1].actions.filter(action => action.id !== 'wait').map(action => action.id))
+      .toEqual(directInteractionActionIds['kindergarten-playhouse'])
   })
   it('offers multiple junior-high situations with distinct settings', () => {
     const juniorHigh = ageModes.find(mode => mode.id === 'junior-high')

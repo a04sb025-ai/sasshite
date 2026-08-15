@@ -19,9 +19,10 @@ type Props = { sceneId: Scene['id']; acted: string | null; onAction: (id: string
 type ArtSource = 'generated' | 'fallback'
 type HitBox = { left: number; top: number; width: number; height: number }
 
-export const directInteractionSceneIds = ['kindergarten-blocks'] as const
+export const directInteractionSceneIds = ['kindergarten-blocks', 'kindergarten-playhouse'] as const
 export const directInteractionActionIds = {
   'kindergarten-blocks': ['share', 'finish-first'],
+  'kindergarten-playhouse': ['invite', 'bring-toy', 'keep-playing'],
 } as const
 
 export const sceneHitAreas = {
@@ -331,6 +332,32 @@ function KindergartenBlocks({ acted, onAction }: Omit<Props, 'sceneId'>) {
   </div>
 }
 
+function KindergartenPlayhouse({ acted, onAction }: Omit<Props, 'sceneId'>) {
+  return <div className={`art kindergarten-playhouse ${acted ? `acted-${acted}` : ''}`} aria-label="おへやで遊んでいる子たちと、少し離れて見ている友達">
+    <div className="playhouse-window" aria-hidden="true" />
+    <div className="playhouse-rug" aria-hidden="true" />
+    <div className="playhouse-child playhouse-player" aria-hidden="true" />
+    <button
+      type="button"
+      className={`playhouse-action friend-action ${acted === 'invite' ? 'selected' : ''}`}
+      aria-label="少し離れて見ている友達を呼ぶ"
+      onClick={() => onAction('invite')}
+    ><span className="playhouse-child" aria-hidden="true" /></button>
+    <button
+      type="button"
+      className={`playhouse-action toy-action ${acted === 'bring-toy' ? 'selected' : ''}`}
+      aria-label="くまのおもちゃを友達のところへ持っていく"
+      onClick={() => onAction('bring-toy')}
+    ><span aria-hidden="true">●</span></button>
+    <button
+      type="button"
+      className={`playhouse-action house-action ${acted === 'keep-playing' ? 'selected' : ''}`}
+      aria-label="おもちゃの家でそのまま遊ぶ"
+      onClick={() => onAction('keep-playing')}
+    ><span aria-hidden="true" /></button>
+  </div>
+}
+
 export function SceneArtwork(props: Props) {
   if (props.sceneId === 'train') return <Train {...props} />
   if (props.sceneId === 'elevator') return <Elevator {...props} />
@@ -338,6 +365,7 @@ export function SceneArtwork(props: Props) {
   if (props.sceneId === 'meeting') return <Meeting {...props} />
   if (props.sceneId === 'ending') return <Ending {...props} />
   if (props.sceneId === 'kindergarten-blocks') return <KindergartenBlocks {...props} />
+  if (props.sceneId === 'kindergarten-playhouse') return <KindergartenPlayhouse {...props} />
   const scene = ageModes.flatMap(mode => mode.scenes).find(item => item.id === props.sceneId)
   if (!scene?.presentation) return null
   return <div className="art choice-scene" aria-label={scene.presentation.situation}>

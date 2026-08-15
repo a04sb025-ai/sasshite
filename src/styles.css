@@ -125,6 +125,32 @@ button:focus-visible { outline: 3px solid #b45128; outline-offset: 3px; }
 .kindergarten-blocks.acted-finish-first .blocks-town i:nth-child(4) { bottom: 66%; transform: rotate(0); }
 .kindergarten-blocks.acted-finish-first .build-block { left: 48%; bottom: 32%; }
 
+.kindergarten-playhouse { background: linear-gradient(#f1dfbd 0 70%, #bb895f 70%); }
+.playhouse-window { position: absolute; left: 9%; top: 9%; width: 35%; height: 24%; border: 5px solid #8b6242; border-radius: 7px; background: linear-gradient(90deg, transparent 47%, #8b6242 47% 53%, transparent 53%), linear-gradient(#b8d8df 47%, #8b6242 47% 53%, #dbe8d4 53%); }
+.playhouse-rug { position: absolute; left: 13%; right: 13%; bottom: 5%; height: 28%; border: 3px solid #6d6154; border-radius: 50%; background: #d7b65c; }
+.playhouse-child { position: absolute; width: 58px; height: 86px; border: 3px solid #51463b; border-radius: 46% 46% 18% 18%; background: #d47a55; }
+.playhouse-child::before { content: ""; position: absolute; left: 17%; top: -30%; width: 66%; aspect-ratio: 1; border: 3px solid #51463b; border-radius: 50%; background: #efc595; }
+.playhouse-child::after { content: ""; position: absolute; left: 34%; top: -10%; width: 32%; height: 8%; border-bottom: 3px solid #51463b; border-radius: 0 0 50% 50%; }
+.playhouse-player { left: 24%; bottom: 28%; transform: rotate(5deg); }
+.playhouse-action { position: absolute; z-index: 6; min-width: 64px; min-height: 64px; border: 0; padding: 0; background: transparent; touch-action: manipulation; }
+.friend-action { right: 8%; bottom: 29%; width: 76px; height: 116px; }
+.friend-action .playhouse-child { right: 5px; bottom: 4px; background: #6f9eb4; }
+.toy-action { left: 42%; bottom: 14%; width: 66px; height: 66px; border: 3px solid #51463b; border-radius: 48% 48% 42% 42%; background: #a96f49; box-shadow: 0 4px 0 #765039; color: transparent; }
+.toy-action::before, .toy-action::after { content: ""; position: absolute; top: -9px; width: 20px; height: 20px; border: 3px solid #51463b; border-radius: 50%; background: #a96f49; }
+.toy-action::before { left: 5px; }
+.toy-action::after { right: 5px; }
+.house-action { left: 7%; bottom: 7%; width: 112px; height: 100px; }
+.house-action span { position: absolute; inset: 26px 9px 5px; border: 3px solid #654b35; border-radius: 5px; background: #cf7150; }
+.house-action span::before { content: ""; position: absolute; left: -12px; top: -35px; width: 82px; height: 62px; border: 3px solid #654b35; background: #e3ba51; transform: rotate(45deg); z-index: -1; }
+.house-action span::after { content: ""; position: absolute; left: 23px; bottom: 0; width: 25px; height: 38px; border: 3px solid #654b35; border-bottom: 0; background: #7f9f8b; }
+.playhouse-action.selected { outline: 4px solid #5c4432; outline-offset: 2px; filter: brightness(1.08); }
+.kindergarten-playhouse.acted-invite .friend-action { right: 25%; transform: rotate(-5deg); }
+.kindergarten-playhouse.acted-invite .friend-action .playhouse-child::after,
+.kindergarten-playhouse.acted-bring-toy .friend-action .playhouse-child::after { border-bottom-width: 4px; transform: translateY(-2px); }
+.kindergarten-playhouse.acted-bring-toy .toy-action { left: 66%; bottom: 20%; transform: rotate(8deg); }
+.kindergarten-playhouse.acted-keep-playing .house-action { transform: scale(1.08); }
+.kindergarten-playhouse.acted-keep-playing .friend-action { right: 5%; }
+
 .scene-hit,
 .drop-zone {
   position: absolute;
