@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { describeScoreChange, scoreAction } from '../game/scoring'
+import { isAwaitingReviewedArtwork } from '../data/scenePresentationPolicy'
 import type { Action, Scene } from '../types'
 import TrainPixiPrototype from '../prototypes/TrainPixiPrototype'
+import { ChoiceScene } from './ChoiceScene'
 import { PlayroomScene } from './PlayroomScene'
 import { SceneArtwork } from './SceneArtwork'
 
@@ -28,7 +30,9 @@ export function GameScene({ scene, number, total, previousScore, onComplete }: P
     ? <TrainPixiPrototype embedded disabled={acted !== null} onAction={finish} />
     : scene.id === 'kindergarten-playhouse'
       ? <PlayroomScene acted={acted?.id ?? null} onAction={finish} />
-      : <SceneArtwork sceneId={scene.id} acted={acted?.id ?? null} onAction={finish} />
+      : isAwaitingReviewedArtwork(scene.id)
+        ? <ChoiceScene scene={scene} acted={acted?.id ?? null} onAction={finish} />
+        : <SceneArtwork sceneId={scene.id} acted={acted?.id ?? null} onAction={finish} />
 
   return <main className="game-screen">
     <header className="scene-header"><span>{String(number).padStart(2, '0')} / {String(total).padStart(2, '0')}</span><p>{scene.eyebrow}</p></header>
