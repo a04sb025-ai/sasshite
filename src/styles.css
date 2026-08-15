@@ -285,6 +285,7 @@ button:focus-visible { outline: 3px solid #b45128; outline-offset: 3px; }
 .reaction strong { flex: none; padding: 3px 7px; border-radius: 999px; background: #e7d8c1; color: #74452f; font-size: 11px; letter-spacing: 0; white-space: nowrap; }
 .timer { height: 2px; background: #d8d0c1; }
 .timer i { display: block; height: 100%; background: #6f7769; animation: drain linear forwards; }
+.timer.resolved i { width: 100%; animation: none; background: #b45128; }
 @keyframes drain { from { width: 100%; } to { width: 0; } }
 
 .result-screen { text-align: center; padding: 60px 24px 40px; }

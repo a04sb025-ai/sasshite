@@ -36,6 +36,6 @@ export function GameScene({ scene, number, total, onComplete }: Props) {
     <div className="reaction" aria-live="polite">{acted
       ? <><span>{acted.reaction}</span><strong>察しスコア {scoreAction(scene, acted)}点</strong></>
       : <span aria-hidden="true">&nbsp;</span>}</div>
-    <div className="timer" aria-hidden="true"><i key={scene.id} style={{ animationDuration: `${scene.timeoutMs}ms` }} /></div>
+    <div className={`timer ${acted ? 'resolved' : ''}`} aria-hidden="true"><i key={scene.id} style={{ animationDuration: `${scene.timeoutMs}ms` }} /></div>
   </main>
 }
