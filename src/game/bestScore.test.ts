@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { readBestScore, recordBestScore } from './bestScore'
+import { describeBestScore, readBestScore, recordBestScore } from './bestScore'
 
 function memoryStorage() {
   const values = new Map<string, string>()
@@ -32,5 +32,11 @@ describe('best score', () => {
     }
 
     expect(recordBestScore(storage, 'working-adult', 73)).toEqual({ best: 73, improved: true })
+  })
+
+  it('describes the next replay target from the personal best', () => {
+    expect(describeBestScore(82, 82, true)).toBe('自己ベスト 82点・更新！')
+    expect(describeBestScore(74, 82, false)).toBe('自己ベスト 82点・あと8点')
+    expect(describeBestScore(82, 82, false)).toBe('自己ベスト 82点・同点')
   })
 })

@@ -44,3 +44,12 @@ export function recordBestScore(
 
   return { best, improved }
 }
+
+export function describeBestScore(score: number, best: number, improved: boolean): string {
+  if (improved) return `自己ベスト ${best}点・更新！`
+
+  const gap = best - score
+  return gap === 0
+    ? `自己ベスト ${best}点・同点`
+    : `自己ベスト ${best}点・あと${gap}点`
+}

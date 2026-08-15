@@ -5,7 +5,7 @@ import { ageModes, getAgeMode } from './data/ageModes'
 import { applyAction, calculatePlayScore, diagnose, initialScores, scoreAction } from './game/scoring'
 import { createSceneOrder } from './game/sceneOrder'
 import { advanceSession } from './game/sessionProgress'
-import { getBestScoreStorage, readBestScore, recordBestScore } from './game/bestScore'
+import { describeBestScore, getBestScoreStorage, readBestScore, recordBestScore } from './game/bestScore'
 import type { Action, AgeModeId, GameRecord, Scores } from './types'
 
 type Screen = 'title' | 'game' | 'result'
@@ -71,7 +71,7 @@ export default function App() {
   const playScore = calculatePlayScore(records)
   return <main className="result-screen">
     <p>今回の察しスコア</p><div className="result-score"><strong>{playScore}</strong><span>/ 100</span></div>
-    <p className="best-score">自己ベスト {bestScore ?? playScore}点{improvedBest ? '・更新！' : ''}</p>
+    <p className="best-score">{describeBestScore(playScore, bestScore ?? playScore, improvedBest)}</p>
     <h1>「{result.title}」</h1><p className="comment">{result.comment}</p>
     <section className="history" aria-labelledby="history-title"><h2 id="history-title">あのとき、あなたは</h2><ol>{records.map(record => <li key={record.scene}><span>{record.scene}</span><p>{record.action}</p><strong>{record.score}点</strong></li>)}</ol></section>
     <p className="result-mode">{getAgeMode(ageModeId).label}・{playScenes.length}場面のサンプル</p>
