@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { scoreAction } from '../game/scoring'
 import type { Action, Scene } from '../types'
 import TrainPixiPrototype from '../prototypes/TrainPixiPrototype'
+import { PlayroomScene } from './PlayroomScene'
 import { SceneArtwork } from './SceneArtwork'
 
 type Props = { scene: Scene; number: number; total: number; onComplete: (action: Action) => void }
@@ -23,11 +24,15 @@ export function GameScene({ scene, number, total, onComplete }: Props) {
     return () => window.clearTimeout(timer)
   }, [finish, scene.timeoutMs])
 
+  const artwork = scene.id === 'train'
+    ? <TrainPixiPrototype embedded disabled={acted !== null} onAction={finish} />
+    : scene.id === 'kindergarten-playhouse'
+      ? <PlayroomScene acted={acted?.id ?? null} onAction={finish} />
+      : <SceneArtwork sceneId={scene.id} acted={acted?.id ?? null} onAction={finish} />
+
   return <main className="game-screen">
     <header className="scene-header"><span>{String(number).padStart(2, '0')} / {String(total).padStart(2, '0')}</span><p>{scene.eyebrow}</p></header>
-    {scene.id === 'train'
-      ? <TrainPixiPrototype embedded disabled={acted !== null} onAction={finish} />
-      : <SceneArtwork sceneId={scene.id} acted={acted?.id ?? null} onAction={finish} />}
+    {artwork}
     <div className="reaction" aria-live="polite">{acted
       ? <><span>{acted.reaction}</span><strong>察しスコア {scoreAction(scene, acted)}点</strong></>
       : <span aria-hidden="true">&nbsp;</span>}</div>
