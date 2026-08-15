@@ -19,12 +19,13 @@ type Props = { sceneId: Scene['id']; acted: string | null; onAction: (id: string
 type ArtSource = 'generated' | 'fallback'
 type HitBox = { left: number; top: number; width: number; height: number }
 
-export const directInteractionSceneIds = ['kindergarten-blocks', 'kindergarten-playhouse', 'junior-high-cleanup', 'junior-high-break'] as const
+export const directInteractionSceneIds = ['kindergarten-blocks', 'kindergarten-playhouse', 'junior-high-cleanup', 'junior-high-break', 'working-adult-documents'] as const
 export const directInteractionActionIds = {
   'kindergarten-blocks': ['share', 'finish-first'],
   'kindergarten-playhouse': ['invite', 'bring-toy', 'keep-playing'],
   'junior-high-cleanup': ['help', 'invite', 'leave'],
   'junior-high-break': ['make-room', 'talk-later', 'keep-talking'],
+  'working-adult-documents': ['help', 'ask', 'prepare'],
 } as const
 
 export const sceneHitAreas = {
@@ -411,6 +412,31 @@ function JuniorHighBreak({ acted, onAction }: Omit<Props, 'sceneId'>) {
   </div>
 }
 
+function WorkingAdultDocuments({ acted, onAction }: Omit<Props, 'sceneId'>) {
+  return <div className={`art working-adult-documents ${acted ? `acted-${acted}` : ''}`} aria-label="会議の前。同僚が資料を配り、自分の席には準備中のパソコンがある">
+    <div className="office-screen" aria-hidden="true"><i /><i /></div>
+    <div className="office-table" aria-hidden="true" />
+    <button
+      type="button"
+      className={`documents-action colleague-documents ${acted === 'ask' ? 'selected' : ''}`}
+      aria-label="資料を配っている同僚に、手伝うか聞く"
+      onClick={() => onAction('ask')}
+    ><span className="office-colleague" aria-hidden="true" /></button>
+    <button
+      type="button"
+      className={`documents-action papers-documents ${acted === 'help' ? 'selected' : ''}`}
+      aria-label="同僚が持つ残りの資料を受け取って配る"
+      onClick={() => onAction('help')}
+    ><span aria-hidden="true" /><span aria-hidden="true" /><span aria-hidden="true" /></button>
+    <button
+      type="button"
+      className={`documents-action laptop-documents ${acted === 'prepare' ? 'selected' : ''}`}
+      aria-label="自分の席のパソコンで会議の準備を続ける"
+      onClick={() => onAction('prepare')}
+    ><span aria-hidden="true" /></button>
+  </div>
+}
+
 export function SceneArtwork(props: Props) {
   if (props.sceneId === 'train') return <Train {...props} />
   if (props.sceneId === 'elevator') return <Elevator {...props} />
@@ -421,6 +447,7 @@ export function SceneArtwork(props: Props) {
   if (props.sceneId === 'kindergarten-playhouse') return <KindergartenPlayhouse {...props} />
   if (props.sceneId === 'junior-high-cleanup') return <JuniorHighCleanup {...props} />
   if (props.sceneId === 'junior-high-break') return <JuniorHighBreak {...props} />
+  if (props.sceneId === 'working-adult-documents') return <WorkingAdultDocuments {...props} />
   const scene = ageModes.flatMap(mode => mode.scenes).find(item => item.id === props.sceneId)
   if (!scene?.presentation) return null
   return <div className="art choice-scene" aria-label={scene.presentation.situation}>

@@ -95,4 +95,14 @@ describe('Ver.0.6 game model', () => {
     expect(juniorHigh?.scenes[1].actions.filter(action => action.id !== 'wait').map(action => action.id))
       .toEqual(directInteractionActionIds['junior-high-break'])
   })
+  it('makes the representative working-adult situation directly interactive', () => {
+    const workingAdult = ageModes.find(mode => mode.id === 'working-adult')
+    const documents = workingAdult?.scenes.find(scene => scene.id === 'working-adult-documents')
+
+    expect(documents).toBeDefined()
+    expect(directInteractionSceneIds).toContain('working-adult-documents')
+    expect(directInteractionActionIds['working-adult-documents']).toEqual(['help', 'ask', 'prepare'])
+    expect(documents?.actions.filter(action => action.id !== 'wait').map(action => action.id))
+      .toEqual(directInteractionActionIds['working-adult-documents'])
+  })
 })
