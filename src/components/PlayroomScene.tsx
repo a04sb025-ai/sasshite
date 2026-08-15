@@ -120,11 +120,22 @@ export function PlayroomScene({ acted, onAction }: Props) {
         onKeyDown={keyboardAction}
         style={{
           ...toyStyle,
+          border: 0,
+          padding: 0,
+          background: 'transparent',
+          touchAction: 'none',
+          cursor: dragging ? 'grabbing' : 'grab',
           transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${dragging ? 1.06 : 1})`,
+          filter: dragging ? 'drop-shadow(0 5px 7px rgba(0,0,0,.24))' : 'none',
           zIndex: dragging ? 20 : 8,
         }}
       >
-        <img src="/scene-art/playroom-block-house.png" alt="" draggable={false} />
+        <img
+          src="/scene-art/playroom-block-house.png"
+          alt=""
+          draggable={false}
+          style={{ display: 'block', width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', userSelect: 'none' }}
+        />
       </button>
     </>}
   </div>
