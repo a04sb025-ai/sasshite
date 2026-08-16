@@ -19,4 +19,16 @@ describe('session progress', () => {
     expect(advanceSession(12, 10)).toEqual({ nextIndex: 9, completed: true })
     expect(advanceSession(-1, 2)).toEqual({ nextIndex: 0, completed: false })
   })
+
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    'normalizes a non-finite stale index (%s)',
+    currentIndex => {
+      expect(advanceSession(currentIndex, 2)).toEqual({ nextIndex: 1, completed: false })
+    },
+  )
+
+  it('treats an invalid session size as an empty completed session', () => {
+    expect(advanceSession(0, Number.NaN)).toEqual({ nextIndex: 0, completed: true })
+    expect(advanceSession(0, Number.POSITIVE_INFINITY)).toEqual({ nextIndex: 0, completed: true })
+  })
 })
