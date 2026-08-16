@@ -19,4 +19,11 @@ describe('session progress', () => {
     expect(advanceSession(12, 10)).toEqual({ nextIndex: 9, completed: true })
     expect(advanceSession(-1, 2)).toEqual({ nextIndex: 0, completed: false })
   })
+
+  it('keeps malformed numeric indexes inside the session boundary', () => {
+    expect(advanceSession(Number.NaN, 3)).toEqual({ nextIndex: 1, completed: false })
+    expect(advanceSession(Number.POSITIVE_INFINITY, 3)).toEqual({ nextIndex: 2, completed: true })
+    expect(advanceSession(Number.NEGATIVE_INFINITY, 3)).toEqual({ nextIndex: 0, completed: false })
+    expect(advanceSession(0, 0.5)).toEqual({ nextIndex: 0, completed: true })
+  })
 })
